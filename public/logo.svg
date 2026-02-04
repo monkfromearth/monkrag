@@ -1,0 +1,26 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="monkrag">
+  <title>monkrag</title>
+  <defs>
+    <linearGradient id="mr-warm" x1="20" y1="40" x2="140" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E9A294"/>
+      <stop offset="0.4" stop-color="#C2A4CD"/>
+      <stop offset="0.7" stop-color="#A2ABDE"/>
+      <stop offset="1" stop-color="#88B2EC"/>
+    </linearGradient>
+  </defs>
+  <!-- edges: query -> nearest neighbors -->
+  <g stroke="url(#mr-warm)" stroke-width="7" stroke-linecap="round">
+    <line x1="80" y1="80" x2="40" y2="44"/>
+    <line x1="80" y1="80" x2="126" y2="50"/>
+    <line x1="80" y1="80" x2="116" y2="120"/>
+  </g>
+  <!-- far, unretrieved docs -->
+  <circle cx="28" cy="118" r="8" fill="#D1CDC8"/>
+  <circle cx="140" cy="104" r="7" fill="#D1CDC8"/>
+  <!-- nearest neighbors -->
+  <circle cx="40" cy="44" r="11" fill="url(#mr-warm)"/>
+  <circle cx="126" cy="50" r="11" fill="url(#mr-warm)"/>
+  <circle cx="116" cy="120" r="11" fill="url(#mr-warm)"/>
+  <!-- the query -->
+  <circle cx="80" cy="80" r="16" fill="#C96F5A" stroke="#FAF8F5" stroke-width="3"/>
+</svg>

@@ -1,0 +1,24 @@
+# OS
+.DS_Store
+
+# Python (arrives with v1)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Knowledge site (Astro)
+knowledge/node_modules/
+knowledge/dist/
+knowledge/.astro/
+
+# Local brand scratch
+brand/
+
+# Editors
+.idea/
+*.swp
