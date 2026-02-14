@@ -1,0 +1,207 @@
+---
+import '../styles/global.css';
+import TagBadge from '../components/TagBadge.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const units = [
+  {
+    n: 0, slug: 'why-rag', color: 'accent', label: 'Foundations',
+    sub: 'Why retrieval, before you build anything',
+    title: 'Unit 0, Why RAG', count: 3,
+    blurb: 'What retrieval-augmented generation is, the hallucination it fixes, and the pipeline in one picture.',
+    lessons: [
+      { id: '0.1', slug: 'what-is-rag', title: 'What RAG Actually Is', desc: 'Answer from sources, not from memory. The whole idea in one picture.', tag: 'concepts', ready: true },
+      { id: '0.2', slug: 'why-models-make-things-up', title: 'Why Models Make Things Up', desc: 'Memorized facts, a knowledge cutoff, and why retrieval fixes both.', tag: 'intuition', ready: true },
+      { id: '0.3', slug: 'the-pipeline', title: 'The Pipeline, End to End', desc: 'Embed, search, augment, generate; where the time and money go.', tag: 'concepts', ready: true },
+    ],
+  },
+  {
+    n: 1, slug: 'embeddings', color: 'lav', label: 'Unit 1',
+    sub: 'Turning text into meaning',
+    title: 'Unit 1, Embeddings', count: 3,
+    blurb: 'How a sentence becomes a vector, how closeness is measured, and how a document is split for retrieval.',
+    lessons: [
+      { id: '1.1', slug: 'meaning-as-geometry', title: 'Meaning as Geometry', desc: 'Text becomes points; similar meaning sits close together.', tag: 'concepts' },
+      { id: '1.2', slug: 'measuring-closeness', title: 'Measuring Closeness', desc: 'Cosine similarity, the angle between two meanings. Interactive.', tag: 'math' },
+      { id: '1.3', slug: 'chunking', title: 'Chunking a Document', desc: 'Split a page into retrievable pieces; the size tradeoff.', tag: 'concepts' },
+    ],
+  },
+  {
+    n: 2, slug: 'retrieval', color: 'blue', label: 'Unit 2',
+    sub: 'Finding the right passages',
+    title: 'Unit 2, Retrieval', count: 4,
+    blurb: 'The vector store, nearest-neighbor search, the metric that grades it, and mixing in keywords. All self-contained.',
+    lessons: [
+      { id: '2.1', slug: 'the-vector-store', title: 'The Vector Store', desc: 'Where the vectors live and how you look one up.', tag: 'concepts' },
+      { id: '2.2', slug: 'nearest-neighbor-search', title: 'Nearest-Neighbor Search', desc: 'Brute force to approximate; the top-k passages.', tag: 'concepts' },
+      { id: '2.3', slug: 'recall-at-k', title: 'Recall@k, the Metric', desc: 'How many of the truly-relevant passages you caught. Interactive.', tag: 'math' },
+      { id: '2.4', slug: 'hybrid-retrieval', title: 'Hybrid Retrieval', desc: 'Keywords plus vectors; when each one wins.', tag: 'concepts' },
+    ],
+  },
+  {
+    n: 3, slug: 'augmentation', color: 'rose', label: 'Unit 3',
+    sub: 'Building the prompt',
+    title: 'Unit 3, Augmentation', count: 3,
+    blurb: 'Pasting passages into the prompt, the limited space they fit in, and why their order matters.',
+    lessons: [
+      { id: '3.1', slug: 'stuffing-the-context', title: 'Stuffing the Context', desc: 'Assemble the prompt from the passages you retrieved.', tag: 'concepts' },
+      { id: '3.2', slug: 'the-context-budget', title: 'The Context Budget', desc: 'The token limit, and how many passages actually fit.', tag: 'concepts' },
+      { id: '3.3', slug: 'lost-in-the-middle', title: 'Lost in the Middle', desc: 'Models read the ends best; placement changes the answer. Interactive.', tag: 'intuition' },
+    ],
+  },
+  {
+    n: 4, slug: 'generation', color: 'green', label: 'Unit 4',
+    sub: 'The model answers',
+    title: 'Unit 4, Generation', count: 3,
+    blurb: 'The grounded answer and its citations, streaming it back, and the failures retrieval does not fix.',
+    lessons: [
+      { id: '4.1', slug: 'the-grounded-answer', title: 'The Grounded Answer', desc: 'Constrain the model to the context, and cite the source.', tag: 'concepts' },
+      { id: '4.2', slug: 'streaming', title: 'Streaming the Answer', desc: 'Tokens as they arrive; why it feels faster.', tag: 'concepts' },
+      { id: '4.3', slug: 'when-it-still-hallucinates', title: 'When It Still Hallucinates', desc: 'Faithfulness, and why grounding is not a guarantee.', tag: 'intuition' },
+    ],
+  },
+  {
+    n: 5, slug: 'reranking', color: 'amber', label: 'Unit 5',
+    sub: 'A smarter second pass',
+    title: 'Unit 5, Reranking', count: 3,
+    blurb: 'Why the first pass is sloppy, the scout-and-judge split, and what the second pass costs you.',
+    lessons: [
+      { id: '5.1', slug: 'why-retrieval-isnt-enough', title: "Why Retrieval Isn't Enough", desc: 'Fast search is approximate; the best passage can rank low.', tag: 'concepts' },
+      { id: '5.2', slug: 'bi-encoder-vs-cross-encoder', title: 'Scout and Judge', desc: 'A fast scout grabs 50; a careful judge keeps 5. Interactive.', tag: 'concepts' },
+      { id: '5.3', slug: 'retrieve-then-rerank', title: 'Retrieve, Then Rerank', desc: 'The two-stage pattern, and the quality-vs-latency trade.', tag: 'math' },
+    ],
+  },
+  {
+    n: 6, slug: 'serving', color: 'accent', label: 'Unit 6',
+    sub: 'The headline: holding it together',
+    title: 'Unit 6, Serving', count: 4,
+    blurb: 'The latency budget across all four hops, the embedding cache, whether rerank earns its cost, and the whole service.',
+    lessons: [
+      { id: '6.1', slug: 'the-latency-budget', title: 'The Latency Budget', desc: 'One p99 number to defend, split across four hops. Interactive.', tag: 'math' },
+      { id: '6.2', slug: 'the-embedding-cache', title: 'The Embedding Cache', desc: "Don't re-embed what you've seen; hot queries, hit rate.", tag: 'concepts' },
+      { id: '6.3', slug: 'does-rerank-earn-its-cost', title: 'Does Rerank Earn Its Cost?', desc: 'Quality bought vs latency spent; the measured verdict.', tag: 'exercise' },
+      { id: '6.4', slug: 'the-whole-service', title: 'The Whole Service', desc: 'Every piece, under one budget. Where the numbers go.', tag: 'concepts' },
+    ],
+  },
+];
+
+// Full literal class strings per color, so Tailwind's scanner generates them
+// (dynamic `mt-${color}Light` concatenation would be purged).
+const C = {
+  accent: { pill: 'text-mt-accent bg-mt-accentLight', grad: 'from-mt-accentLight', badge: 'text-mt-accent border-mt-accent/20', dotBg: 'bg-mt-accentLight', dotText: 'text-mt-accent' },
+  lav:    { pill: 'text-mt-lav bg-mt-lavLight',       grad: 'from-mt-lavLight',    badge: 'text-mt-lav border-mt-lav/20',       dotBg: 'bg-mt-lavLight',    dotText: 'text-mt-lav' },
+  blue:   { pill: 'text-mt-blue bg-mt-blueLight',     grad: 'from-mt-blueLight',   badge: 'text-mt-blue border-mt-blue/20',     dotBg: 'bg-mt-blueLight',   dotText: 'text-mt-blue' },
+  rose:   { pill: 'text-mt-rose bg-mt-roseLight',     grad: 'from-mt-roseLight',   badge: 'text-mt-rose border-mt-rose/20',     dotBg: 'bg-mt-roseLight',   dotText: 'text-mt-rose' },
+  green:  { pill: 'text-mt-green bg-mt-greenLight',   grad: 'from-mt-greenLight',  badge: 'text-mt-green border-mt-green/20',   dotBg: 'bg-mt-greenLight',  dotText: 'text-mt-green' },
+  amber:  { pill: 'text-mt-amber bg-mt-amberLight',   grad: 'from-mt-amberLight',  badge: 'text-mt-amber border-mt-amber/20',   dotBg: 'bg-mt-amberLight',  dotText: 'text-mt-amber' },
+};
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>monkrag · Build a RAG Serving System From Scratch</title>
+    <meta name="description" content="A from-scratch course on how retrieval-augmented generation actually works: embeddings, nearest-neighbor retrieval, grounding, reranking, and serving it all under a latency budget.">
+    <link rel="icon" type="image/svg+xml" href={base + "/logo.svg"} />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="font-sans text-mt-text min-h-screen">
+
+    <header class="border-b border-mt-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href={base + "/"} class="flex items-center gap-3">
+                <img src={base + "/logo.svg"} alt="monkrag" class="h-7 w-auto" />
+                <div>
+                    <h1 class="font-bold text-lg leading-none">monkrag</h1>
+                    <p class="text-mt-muted text-xs mt-0.5">The Learning Course</p>
+                </div>
+            </a>
+            <div class="flex items-center gap-4 text-sm text-mt-muted">
+                <span>7 units</span>
+                <span class="text-mt-border">|</span>
+                <span>23 lessons</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-10">
+
+        <!-- Hero -->
+        <section class="mb-14">
+            <h2 class="text-3xl font-extrabold tracking-tight mb-3">Build a RAG serving system from scratch.</h2>
+            <p class="text-mt-muted text-lg max-w-2xl leading-relaxed">
+                You'll build the system that takes a question, finds the passages that answer it, and lets a
+                language model reply from those sources. This course teaches the ideas, not the implementation:
+                by the end you'll understand every hop well enough to write the serving system yourself, and to
+                say where each millisecond goes.
+            </p>
+        </section>
+
+        <!-- Course Map -->
+        <section>
+            {units.map((u) => {
+                const c = C[u.color as keyof typeof C];
+                return (
+                <div class="mb-10">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class={`tag ${c.pill} px-2 py-0.5 rounded-full`}>{u.label}</span>
+                        <span class="text-mt-muted text-sm">{u.sub}</span>
+                    </div>
+                    <div class="unit-card bg-white rounded-2xl border border-mt-border overflow-hidden">
+                        <div class={`p-6 border-b border-mt-border bg-gradient-to-r ${c.grad} to-white`}>
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h3 class="font-bold text-xl">{u.title}</h3>
+                                    <p class="text-mt-muted mt-1">{u.blurb}</p>
+                                </div>
+                                <span class={`tag bg-white ${c.badge} px-2 py-0.5 rounded-full border whitespace-nowrap`}>{u.count} lessons</span>
+                            </div>
+                        </div>
+                        <div class="divide-y divide-mt-border">
+                            {u.lessons.map((l: any) => (l.ready ? (
+                                <a href={base + `/${u.slug}/${l.slug}`} class="lesson-item flex items-center gap-4 px-6 py-4 cursor-pointer">
+                                    <div class={`w-8 h-8 rounded-full ${c.dotBg} flex items-center justify-center flex-shrink-0`}><span class={`${c.dotText} font-semibold text-sm`}>{l.id}</span></div>
+                                    <div class="flex-1"><h4 class="font-semibold text-sm">{l.title}</h4><p class="text-mt-muted text-xs mt-0.5">{l.desc}</p></div>
+                                    <TagBadge variant={l.tag as 'concepts'}>{l.tag}</TagBadge>
+                                </a>
+                            ) : (
+                                <div class="flex items-center gap-4 px-6 py-4 opacity-55">
+                                    <div class="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0"><span class="text-mt-muted font-semibold text-sm">{l.id}</span></div>
+                                    <div class="flex-1"><h4 class="font-semibold text-sm">{l.title}</h4><p class="text-mt-muted text-xs mt-0.5">{l.desc}</p></div>
+                                    <span class="tag px-2 py-0.5 rounded-full text-mt-muted bg-stone-100">soon</span>
+                                </div>
+                            )))}
+                        </div>
+                    </div>
+                </div>
+                );
+            })}
+        </section>
+
+        <div class="text-center py-8">
+            <a href={base + "/why-rag/what-is-rag"} class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-mt-accent text-white text-sm font-semibold hover:opacity-90 transition">
+                Start with lesson 0.1
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+
+    </main>
+
+    <footer class="border-t border-mt-border py-8 text-center text-mt-muted text-sm">
+        <p>monkrag &middot; <a href="https://github.com/monkfromearth/monkrag" class="text-mt-accent hover:underline">GitHub</a> &middot; built by <a href="https://github.com/monkfromearth" class="text-mt-accent hover:underline">Sameer</a></p>
+    </footer>
+
+</body>
+</html>
+
+<style>
+    .unit-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .unit-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
+    .lesson-item { transition: background-color 0.12s ease; }
+    .lesson-item:hover { background-color: #FCFAF7; }
+    .tag { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; }
+</style>

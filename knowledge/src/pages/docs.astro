@@ -1,0 +1,53 @@
+---
+import '../styles/global.css';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>monkrag · Docs</title>
+    <meta name="description" content="Documentation for the monkrag serving system. Installation, the API, and how to run it against your own documents. Arriving with the first release.">
+    <link rel="icon" type="image/svg+xml" href={base + "/logo.svg"} />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="font-sans text-mt-text min-h-screen">
+
+    <header class="border-b border-mt-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href={base + "/"} class="flex items-center gap-3">
+                <img src={base + "/logo.svg"} alt="monkrag" class="h-7 w-auto" />
+                <span class="font-bold text-lg leading-none">monkrag</span>
+            </a>
+            <div class="flex items-center gap-5 text-sm text-mt-muted">
+                <a href={base + "/learn"} class="hover:text-mt-text transition-colors">Learn</a>
+                <a href="https://github.com/monkfromearth/monkrag" class="text-mt-accent hover:underline">GitHub</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-6 py-20 text-center">
+        <div class="w-12 h-12 rounded-xl bg-mt-lavLight flex items-center justify-center mx-auto mb-6">
+            <svg class="w-6 h-6 text-mt-lav" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight mb-3">Docs arrive with the first release.</h1>
+        <p class="text-mt-muted text-lg leading-relaxed max-w-xl mx-auto mb-8">
+            Installation, the API, and how to run monkrag against your own documents will live here once the
+            v1 serving code lands. For now, the ideas behind every part are in the course.
+        </p>
+        <div class="flex items-center justify-center gap-3">
+            <a href={base + "/learn"} class="px-5 py-2.5 rounded-xl bg-mt-accent text-white text-sm font-semibold hover:opacity-90 transition">Start the course</a>
+            <a href="https://github.com/monkfromearth/monkrag/blob/main/docs/roadmap/index.md" class="px-5 py-2.5 rounded-xl bg-white border border-mt-border text-mt-text text-sm font-semibold hover:bg-mt-bg transition">Read the roadmap</a>
+        </div>
+    </main>
+
+    <footer class="border-t border-mt-border py-8 text-center text-mt-muted text-sm">
+        <p>monkrag &middot; <a href="https://github.com/monkfromearth/monkrag" class="text-mt-accent hover:underline">GitHub</a></p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+import GroundingDemo from '../../components/demos/GroundingDemo.astro';
+---
+
+<LessonLayout title="What RAG Actually Is" lessonNumber="0.1" section="Why RAG">
+
+    <LessonHeader lessonNumber="0.1" title="What RAG Actually Is" description="A language model that answers from sources you hand it, instead of from memory. That one change is the whole idea.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A closed-book exam, made open-book.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Ask a language model a question and, by default, it answers from memory: whatever it picked up
+            while training, squeezed into its weights. That works for common knowledge and fails the moment
+            you ask about something specific, recent, or private. It does not say "I do not know." It writes
+            a fluent, confident answer that may be wrong.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Retrieval-augmented generation (RAG) turns that closed-book exam into an open-book one. Before the
+            model answers, you go and find the passages that actually address the question, and you put them
+            in front of the model. Same model, but now it reads from a source instead of reaching into memory.
+        </p>
+
+        <GroundingDemo />
+
+        <InsightBox>
+            <p class="text-sm">The model did not get smarter. It got a <strong>source to read</strong>. RAG is
+            the work of finding the right source and handing it over before the model speaks.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Retrieve, then generate.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The name says it in order. First <strong>retrieve</strong>: find the passages relevant to the
+            question. Then <strong>generate</strong>: let the model write the answer using those passages as
+            its context. The whole system is the plumbing that makes those two steps fast and reliable.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-2"><span class="font-mono text-mt-muted">question</span> &rarr; find the closest passages &rarr; paste them into the prompt &rarr; <span class="font-mono text-mt-green">grounded answer + citation</span></p>
+            <p class="text-mt-muted text-xs">Four hops, every question. Lesson 0.3 walks each one; the rest of the course builds them.</p>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">What RAG is not</h2>
+        <div class="grid sm:grid-cols-3 gap-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">Re-training the model</p>
+                <p class="text-mt-muted text-xs leading-relaxed">No weights change. The model is untouched; only its input changes. That is why RAG can use fresh or private data the model never saw.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">Just search</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Search returns documents and stops. RAG goes one step further: it reads them and writes an answer, with a pointer back to the source.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">A guarantee of truth</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Grounding makes the model far more reliable, not infallible. It can still misread a passage. Unit 4 looks at when it slips.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">RAG makes a model answer from sources you provide, not from its own memory.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">It is two steps in order: retrieve the right passages, then generate the answer from them.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Nothing about the model is re-trained. The leverage is entirely in what you put in front of it.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/learn" prevLabel="Course map"
+        nextHref="/why-rag/why-models-make-things-up" nextLabel="Next: Why Models Make Things Up"
+    />
+
+</LessonLayout>

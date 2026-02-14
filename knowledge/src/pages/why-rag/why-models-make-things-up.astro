@@ -1,0 +1,91 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="Why Models Make Things Up" lessonNumber="0.2" section="Why RAG">
+
+    <LessonHeader lessonNumber="0.2" title="Why Models Make Things Up" description="A language model stores facts the way a sponge stores water: squeezed in, lossy, and with no receipt. That is why it guesses, and why a source fixes it.">
+        <TagBadge variant="intuition">intuition</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The friend who never says "I don't know."</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Picture someone who has read an enormous amount, remembers the gist of most of it, and is
+            physically unable to admit a gap. Ask them anything and they answer smoothly, in the right shape,
+            with the right tone. Often they are right. Sometimes they are confidently, fluently wrong. A
+            language model is that friend.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The reason is in how it stores what it knows. During training, billions of sentences get
+            compressed into the model's numbers (its parameters). Facts are not filed away as exact records
+            you can look up. They are blended into the weights, the way many photos averaged together blur
+            into a face that is no one in particular. The common, repeated facts survive that blending. The
+            rare or specific ones get smeared.
+        </p>
+        <InsightBox>
+            <p class="text-sm">A model's memory is <strong>lossy and has no receipt</strong>. It cannot point
+            to where a fact came from, because it never kept the source. So it cannot tell its solid
+            knowledge from its blurry guesses.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Two gaps memory cannot cover.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Even a perfect memory of training data would still miss two things, and these are exactly where
+            real questions live:
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1">The knowledge cutoff</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Training ended on some date. Anything after it (a release last week, a price that changed yesterday) simply is not in the weights. The model will still answer, by guessing in the right shape.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1">Private and specific facts</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Your company's docs, this customer's order, that internal wiki page: the model never saw them. They are not rare in its training data, they are absent from it.</p>
+            </div>
+        </div>
+        <p class="text-mt-muted leading-relaxed">
+            Ask "what shipped in our Q3 launch?" and a pure-memory model has no honest answer available. It
+            produces a plausible one anyway. That is not a bug to be patched out; it is what answering from a
+            blurry, source-less memory looks like.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Retrieval gives it a receipt.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The fix is not a smarter model. It is a source. If you find the passage that answers the question
+            and place it in the model's context, the task changes from "recall this from memory" to "read
+            this and summarize it." The second task is far easier and far safer, and the model can now cite
+            where the answer came from. That is the entire promise of RAG, and the rest of the course is how
+            to do the finding well.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Hallucination is the cost of asking memory to do retrieval's job. Hand the model
+            a <strong>source to read</strong> and most of it goes away.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">A model stores facts blended into its weights: lossy, and with no source to check against.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">It will confidently answer past its knowledge cutoff and about private data it never saw.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Retrieval reframes the task from recalling a fact to reading one, which is what stops the guessing.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/why-rag/what-is-rag" prevLabel="Prev: What RAG Actually Is"
+        nextHref="/why-rag/the-pipeline" nextLabel="Next: The Pipeline, End to End"
+    />
+
+</LessonLayout>

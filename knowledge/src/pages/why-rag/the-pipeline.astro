@@ -1,0 +1,92 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="The Pipeline, End to End" lessonNumber="0.3" section="Why RAG">
+
+    <LessonHeader lessonNumber="0.3" title="The Pipeline, End to End" description="Four stations on an assembly line: embed, search, augment, generate. Follow one question through all four, and notice where the time and money go.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">9 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">One question, four stations.</h2>
+        <p class="text-mt-muted leading-relaxed mb-6">
+            A RAG service is an assembly line. A question enters, passes through four stations, and a grounded
+            answer comes out. Each station does one job and hands its result to the next. Here is the whole
+            line, then we trace a single question through it.
+        </p>
+
+        <div class="space-y-3 mb-4">
+            <div class="flex items-start gap-4 bg-white border border-mt-border rounded-xl p-4">
+                <div class="w-9 h-9 rounded-lg bg-mt-lavLight flex items-center justify-center flex-shrink-0"><span class="text-mt-lav font-bold text-sm">1</span></div>
+                <div><h3 class="font-semibold text-sm">Embed</h3><p class="text-mt-muted text-xs leading-relaxed mt-0.5">Turn the question into a vector, a list of numbers that captures its meaning. Now it can be compared to passages by meaning, not by matching words.</p></div>
+            </div>
+            <div class="flex items-start gap-4 bg-white border border-mt-border rounded-xl p-4">
+                <div class="w-9 h-9 rounded-lg bg-mt-blueLight flex items-center justify-center flex-shrink-0"><span class="text-mt-blue font-bold text-sm">2</span></div>
+                <div><h3 class="font-semibold text-sm">Search</h3><p class="text-mt-muted text-xs leading-relaxed mt-0.5">Compare that vector to every passage's vector and return the few closest in meaning (the top-k). This is nearest-neighbor search over the index.</p></div>
+            </div>
+            <div class="flex items-start gap-4 bg-white border border-mt-border rounded-xl p-4">
+                <div class="w-9 h-9 rounded-lg bg-mt-roseLight flex items-center justify-center flex-shrink-0"><span class="text-mt-rose font-bold text-sm">3</span></div>
+                <div><h3 class="font-semibold text-sm">Augment</h3><p class="text-mt-muted text-xs leading-relaxed mt-0.5">Build the prompt: the question plus the retrieved passages as context, kept within the model's token budget. This is where the model gets its source.</p></div>
+            </div>
+            <div class="flex items-start gap-4 bg-white border border-mt-border rounded-xl p-4">
+                <div class="w-9 h-9 rounded-lg bg-mt-greenLight flex items-center justify-center flex-shrink-0"><span class="text-mt-green font-bold text-sm">4</span></div>
+                <div><h3 class="font-semibold text-sm">Generate</h3><p class="text-mt-muted text-xs leading-relaxed mt-0.5">Call the language model, which writes the answer grounded in that context and cites the passages it used.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Trace one question.</h2>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed font-mono">
+            <p class="mb-1"><span class="text-mt-lav">embed</span> &nbsp; "what shipped in Q3?" &rarr; [0.12, -0.04, ...]</p>
+            <p class="mb-1"><span class="text-mt-blue">search</span> &nbsp; nearest 3 passages &rarr; launch-notes, changelog, faq</p>
+            <p class="mb-1"><span class="text-mt-rose">augment</span> &nbsp; prompt = question + those 3 passages</p>
+            <p><span class="text-mt-green">generate</span> &rarr; "The billing API and SSO." [launch-notes]</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed">
+            Notice the data changes shape at each station: text, then a vector, then a short list of passages,
+            then a prompt, then an answer. Each unit of this course builds one of these stations. Reranking
+            (Unit 5) slips a smarter step between search and augment.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Where the time and money go.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Four stations chained together means four places to spend time and money. Embedding and the model
+            call usually dominate the clock; the model call usually dominates the bill. Because the stations
+            run in sequence, the total time is their sum, and the slowest one drags the whole answer.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That is the question monkrag's second stage is built to answer, with real numbers: where does each
+            millisecond and each cent go, and which upgrades (a reranker, a cache) actually earn their cost?
+            A pipeline that works is v1. A pipeline you can <em>account for</em> is the senior part.
+        </p>
+        <InsightBox>
+            <p class="text-sm">The pipeline is four hops in sequence, so latency adds up and the slowest hop
+            sets the pace. Measuring that budget, not just wiring the hops, is the whole point of v2.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">A RAG service is four stations in order: embed, search, augment, generate.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">The data changes shape at each hop: text, vector, passages, prompt, answer.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Because the hops run in sequence, latency adds up, which is why measuring the budget is the senior work.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/why-rag/why-models-make-things-up" prevLabel="Prev: Why Models Make Things Up"
+        nextHref="/learn" nextLabel="Course map: Unit 1, Embeddings is next"
+    />
+
+</LessonLayout>
