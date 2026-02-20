@@ -1,0 +1,105 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+import Formula from '../../components/Formula.astro';
+import SemanticMapDemo from '../../components/demos/SemanticMapDemo.astro';
+---
+
+<LessonLayout title="Measuring Closeness" lessonNumber="1.2" section="Embeddings">
+
+    <LessonHeader lessonNumber="1.2" title="Measuring Closeness" description="If meaning is distance, you need a way to measure it. Cosine similarity reads the angle between two meanings.">
+        <TagBadge variant="math">math</TagBadge>
+        <TagBadge variant="default">9 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Drag the question and watch the nearest meanings light up.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Last lesson, meaning became a map of points. The natural next question: given a question dropped
+            anywhere on that map, which passages are closest? Grab the coral dot below and move it. The three
+            nearest passages light up, and a closeness number updates as you go. Drag it into the dog corner and
+            the dog words win; drag it toward the car corner and they take over.
+        </p>
+
+        <SemanticMapDemo />
+
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That is retrieval in miniature. The question is a point, every passage is a point, and we keep the
+            ones that sit nearest. The rest of this lesson is about how to put a real number on "nearest".
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Why the angle, not the raw distance.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The obvious move is straight-line distance, the gap between two points. It works on the toy map, but
+            it has a flaw in real embeddings: longer texts tend to produce longer vectors (points further from
+            the origin), so a chatty passage can look "far" just for being long, even when it is about exactly
+            the right thing. Length should not decide meaning.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            So instead of distance we read direction. Picture an arrow from the origin out to each point. Two
+            texts about the same thing point the same way, whatever their length. The standard measure is
+            <strong>cosine similarity</strong>: it reads the angle between the two arrows and ignores how long
+            they are.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-1"><span class="font-semibold text-mt-text">same direction</span> (angle 0) &rarr; cosine <span class="font-mono text-mt-green">1</span>, very similar.</p>
+            <p class="mb-1"><span class="font-semibold text-mt-text">at a right angle</span> (angle 90) &rarr; cosine <span class="font-mono text-mt-muted">0</span>, unrelated.</p>
+            <p class="mb-0"><span class="font-semibold text-mt-text">opposite direction</span> (angle 180) &rarr; cosine <span class="font-mono text-mt-rose">-1</span>, opposite meaning.</p>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The formula, then a worked number.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Cosine similarity is a short recipe. Multiply the two vectors piece by piece and add up the results
+            (that sum is the dot product). Then divide by each vector's length, to cancel out how long they are.
+        </p>
+        <Formula caption="dot product on top, the two vector lengths on the bottom">
+            <span class="var">cos</span>(<span class="var">a</span>, <span class="var">b</span>) <span class="op">=</span> ( <span class="var">a</span> &middot; <span class="var">b</span> ) <span class="op">/</span> ( |<span class="var">a</span>| &times; |<span class="var">b</span>| )
+        </Formula>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Take two tiny vectors, <span class="font-mono text-xs">a = (3, 4)</span> for the question and
+            <span class="font-mono text-xs">b = (4, 3)</span> for a passage. Top line, the dot product:
+            <span class="font-mono text-xs">3&times;4 + 4&times;3 = 12 + 12 = 24</span>. Bottom line, the lengths:
+            each is <span class="font-mono text-xs">&radic;(3&sup2; + 4&sup2;) = &radic;25 = 5</span>, so the
+            bottom is <span class="font-mono text-xs">5 &times; 5 = 25</span>.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-1 font-mono">cos(a, b) = 24 / 25 = <span class="text-mt-green">0.96</span></p>
+            <p class="text-mt-muted text-xs">Close to 1, so these two nearly point the same way: a strong match.</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Now double the passage to <span class="font-mono text-xs">b = (8, 6)</span>, twice as long. The dot
+            product doubles to <span class="font-mono text-xs">48</span> and the bottom doubles too
+            (<span class="font-mono text-xs">5 &times; 10 = 50</span>), so the score stays
+            <span class="font-mono text-xs">48 / 50 = 0.96</span>. Length changed, the verdict did not. That is
+            exactly the property we wanted.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Cosine similarity scores meaning by <strong>direction</strong>, on a scale from
+            1 (same) through 0 (unrelated) to -1 (opposite). Because it divides out length, a long passage and a
+            short one are judged on what they say, not how much.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">Retrieval ranks passages by closeness to the question, both treated as points in the embedding space.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">Cosine similarity reads the angle between two vectors: 1 is same direction, 0 is unrelated, -1 is opposite.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">It divides out vector length, so a passage is scored on meaning, not on how long it happens to be.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/embeddings/meaning-as-geometry" prevLabel="Prev: Meaning as Geometry"
+        nextHref="/embeddings/chunking" nextLabel="Next: Chunking a Document"
+    />
+
+</LessonLayout>

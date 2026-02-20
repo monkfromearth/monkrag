@@ -1,0 +1,144 @@
+---
+/**
+ * Latency budget demo (Lesson 6.1). The headline interaction.
+ * A horizontal stacked bar split into four stages: embed, search, rerank, generate.
+ * Drag the handle under any stage to set its cost in milliseconds (snapped to 25ms steps).
+ * The running total is the sum of the four stages. A fixed budget line sits at 800ms.
+ * Drag one stage slow and the whole total blows past the budget, because the hops add up.
+ * Positions stay continuous; the values snap. Reduced-motion safe. Numbers are illustrative.
+ */
+const W = 560, H = 210;
+const trackX = 40, trackW = 480, barY = 70, barH = 44;
+const budgetMs = 800;
+const stepMs = 25;
+// ms per pixel: the track maps to a 1000ms scale so the 800ms budget sits at 80% of the width.
+const scaleMs = 1000;
+const pxPerMs = trackW / scaleMs;
+const budgetX = trackX + budgetMs * pxPerMs;
+
+// stage label, palette hex, starting ms
+const stages = [
+  { key: 'embed', label: 'embed', color: '#7E7FBC', ms: 100 },
+  { key: 'search', label: 'search', color: '#5E80C9', ms: 150 },
+  { key: 'rerank', label: 'rerank', color: '#C2873B', ms: 200 },
+  { key: 'generate', label: 'generate', color: '#4F9D7B', ms: 300 },
+];
+---
+
+<div class="mt-demo mr-latency my-6 bg-white border border-mt-border rounded-2xl p-6"
+     data-trackx={trackX} data-trackw={trackW} data-bary={barY} data-barh={barH}
+     data-budget={budgetMs} data-step={stepMs} data-pxperms={pxPerMs}>
+    <p class="text-xs uppercase tracking-wide text-mt-muted font-semibold mb-3 text-center">Drag a stage's handle to change its cost</p>
+
+    <svg viewBox={`0 0 ${W} ${H}`} class="w-full max-w-xl mx-auto block" role="img" aria-label="drag each stage's handle to set its latency; the total is the sum and must stay under the budget">
+        <!-- budget line -->
+        <line data-budgetline x1={budgetX} y1="40" x2={budgetX} y2="150" stroke="#C9C2BB" stroke-width="2" stroke-dasharray="4 4"/>
+        <text data-budgetlabel x={budgetX} y="34" text-anchor="middle" class="font-mono" font-size="9" fill="#6B6560">budget {budgetMs}ms</text>
+
+        <!-- stacked bar: one rect per stage, laid out left to right in the script -->
+        {stages.map((s) => (
+            <g data-stage={s.key}>
+                <rect data-seg x={trackX} y={barY} width="0" height={barH} fill={s.color} />
+                <text data-seglabel x={trackX} y={barY + 28} text-anchor="middle" class="font-mono" font-size="9" fill="#fff"></text>
+                <!-- draggable handle below this segment -->
+                <g data-handle class="mt-grab" style="cursor:ew-resize">
+                    <rect data-handlehit x={trackX} y={barY + barH + 6} width="22" height="22" rx="5" fill={s.color} opacity="0.18"/>
+                    <path data-handleicon d="" stroke={s.color} stroke-width="2" stroke-linecap="round"/>
+                </g>
+            </g>
+        ))}
+
+        <!-- total readout -->
+        <text x={trackX} y="190" class="font-mono" font-size="11" fill="#6B6560">total p99</text>
+        <text data-total x={trackX + 70} y="190" class="font-mono" font-size="13" font-weight="700" fill="#4F9D7B">0ms</text>
+        <text data-verdict x={trackX + 150} y="190" class="font-mono" font-size="11" fill="#4F9D7B">within budget</text>
+    </svg>
+
+    <p class="text-center text-mt-muted text-xs mt-2">Stage times are illustrative, not measured. They show how four sequential hops add into one number.</p>
+</div>
+
+<script>
+    import { draggable, clamp } from '../../lib/interact';
+    // No tweens here: the bar redraws by direct attribute writes, so it is already
+    // reduced-motion safe (nothing animates, the final state is always shown).
+
+    document.querySelectorAll<HTMLElement>('.mr-latency').forEach((root) => {
+        const trackX = Number(root.dataset.trackx);
+        const barY = Number(root.dataset.bary);
+        const barH = Number(root.dataset.barh);
+        const budgetMs = Number(root.dataset.budget);
+        const step = Number(root.dataset.step);
+        const pxPerMs = Number(root.dataset.pxperms);
+
+        const svg = root.querySelector<SVGSVGElement>('svg')!;
+        const groups = Array.from(root.querySelectorAll<SVGGElement>('[data-stage]'));
+        const totalEl = root.querySelector<SVGTextElement>('[data-total]')!;
+        const verdictEl = root.querySelector<SVGTextElement>('[data-verdict]')!;
+
+        const ACCENT = '#C96F5A', GREEN = '#4F9D7B';
+        const minMs = 25, maxMs = 500;
+
+        // starting ms per stage, read off the rect fill so colors and order stay in sync
+        const state = groups.map((g) => {
+            const ds = (g.getAttribute('data-stage') || '');
+            const start = { embed: 100, search: 150, rerank: 200, generate: 300 }[ds] ?? 100;
+            return { ms: start, color: (g.querySelector('[data-seg]') as SVGRectElement).getAttribute('fill') || '#7E7FBC' };
+        });
+
+        function snap(ms: number) { return clamp(Math.round(ms / step) * step, minMs, maxMs); }
+
+        function paint() {
+            let cursor = trackX;
+            const total = state.reduce((a, s) => a + s.ms, 0);
+            const over = total > budgetMs;
+
+            groups.forEach((g, i) => {
+                const w = state[i].ms * pxPerMs;
+                const seg = g.querySelector('[data-seg]') as SVGRectElement;
+                const segLabel = g.querySelector('[data-seglabel]') as SVGTextElement;
+                const hitGroup = g.querySelector('[data-handle]') as SVGGElement;
+                const hit = g.querySelector('[data-handlehit]') as SVGRectElement;
+                const icon = g.querySelector('[data-handleicon]') as SVGPathElement;
+                const segX = cursor;
+                const segCx = segX + w / 2;
+
+                // width tracks the dragged value live; positions stay continuous, values snap
+                seg.setAttribute('x', String(segX));
+                seg.setAttribute('width', String(Math.max(0, w)));
+
+                // label: show name + ms only if the segment is wide enough to read
+                segLabel.setAttribute('x', String(segCx));
+                segLabel.textContent = w > 46 ? `${(g.getAttribute('data-stage'))} ${state[i].ms}` : `${state[i].ms}`;
+                segLabel.setAttribute('fill', w > 30 ? '#fff' : 'transparent');
+
+                // handle sits centered under its segment
+                const hx = segCx - 11;
+                hit.setAttribute('x', String(hx));
+                icon.setAttribute('d', `M${segCx - 4} ${barY + barH + 12} L${segCx - 4} ${barY + barH + 24} M${segCx + 4} ${barY + barH + 12} L${segCx + 4} ${barY + barH + 24}`);
+                hitGroup.setAttribute('data-cursor', String(segCx));
+
+                cursor += w;
+            });
+
+            totalEl.textContent = `${total}ms`;
+            totalEl.setAttribute('fill', over ? ACCENT : GREEN);
+            verdictEl.textContent = over ? `over by ${total - budgetMs}ms` : 'within budget';
+            verdictEl.setAttribute('fill', over ? ACCENT : GREEN);
+        }
+
+        // each handle drags horizontally; the pointer x sets that one stage's width (snapped ms)
+        groups.forEach((g, i) => {
+            const handle = g.querySelector('[data-handle]') as SVGGElement;
+            draggable(svg, handle, (x) => {
+                // the stage starts where the segments before it end
+                const before = state.slice(0, i).reduce((a, s) => a + s.ms, 0);
+                const startPx = trackX + before * pxPerMs;
+                const wantPx = clamp(x - startPx, minMs * pxPerMs, maxMs * pxPerMs);
+                state[i].ms = snap(wantPx / pxPerMs);
+                paint();
+            });
+        });
+
+        paint();
+    });
+</script>

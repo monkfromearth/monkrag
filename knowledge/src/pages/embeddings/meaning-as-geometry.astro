@@ -1,0 +1,116 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="Meaning as Geometry" lessonNumber="1.1" section="Embeddings">
+
+    <LessonHeader lessonNumber="1.1" title="Meaning as Geometry" description="Words and sentences turn into points in space, and things that mean similar things land close together. That is an embedding.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A library shelved by meaning, not by spelling.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Walk into a good library and the cookbooks sit next to each other, the physics texts cluster on
+            their own shelf, and the poetry is two rooms over. Nobody filed them alphabetically by title. They
+            filed them by what they are about, so a book you want sits near other books you would also want.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That is the whole trick behind retrieval. Before we can find the passages that answer a question,
+            we need a way to put every passage on a shelf by meaning. The tool that does it is an
+            <strong>embedding</strong>: it turns a piece of text into a point in space, and arranges things so
+            that close together means similar in meaning.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Text becomes a list of numbers.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A point in space is just its coordinates. On a flat map that is two numbers, an across and an up.
+            An embedding does the same thing, only with many more numbers, often hundreds. That list of numbers
+            is called a <strong>vector</strong>, and the model that produces it (an embedding model) is trained
+            so that texts about similar things get similar lists.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Hundreds of dimensions sounds intimidating, but the idea does not change from two. More room just
+            lets the model separate finer shades of meaning. We will reason about it in two numbers because that
+            is something you can draw on paper; the math is identical when there are five hundred.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-1"><span class="font-mono text-mt-muted">"a small dog"</span> &rarr; embedding model &rarr; <span class="font-mono text-mt-lav">[0.81, 0.12, ..., 0.04]</span></p>
+            <p class="text-mt-muted text-xs">One text in, one fixed-length list of numbers out. Same text always gives the same list.</p>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A tiny worked example.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Pretend we have an embedding model with only two dimensions, so every word is a point on a flat map.
+            Here are some made-up coordinates. The numbers are invented for the picture, but the arrangement is
+            the point: the dog words huddle together, and the road word sits far off on its own.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm">
+            <table class="w-full font-mono text-xs">
+                <thead>
+                    <tr class="text-mt-muted text-left">
+                        <th class="pb-2 font-semibold">word</th>
+                        <th class="pb-2 font-semibold">point (x, y)</th>
+                    </tr>
+                </thead>
+                <tbody class="text-mt-text">
+                    <tr><td class="py-1">puppy</td><td class="py-1 text-mt-lav">(0.9, 0.8)</td></tr>
+                    <tr><td class="py-1">dog</td><td class="py-1 text-mt-lav">(0.8, 0.9)</td></tr>
+                    <tr><td class="py-1">cat</td><td class="py-1 text-mt-lav">(0.7, 0.7)</td></tr>
+                    <tr><td class="py-1">highway</td><td class="py-1 text-mt-muted">(0.1, 0.2)</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Eyeball it: <span class="font-mono text-xs">puppy</span> at (0.9, 0.8) is almost on top of
+            <span class="font-mono text-xs">dog</span> at (0.8, 0.9), and <span class="font-mono text-xs">cat</span>
+            is nearby. <span class="font-mono text-xs">highway</span> at (0.1, 0.2) sits in a different corner.
+            Nothing here matched letters. "Puppy" and "dog" share no spelling, yet they landed next to each
+            other because they mean similar things. That is what we mean by meaning as geometry.
+        </p>
+        <InsightBox>
+            <p class="text-sm">An embedding is a <strong>map of meaning</strong>. Each text is a point; texts
+            about similar things sit close. Find the right passage and you have turned a reading problem into a
+            distance problem.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">What an embedding is not</h2>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">Keyword matching</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Keyword search compares letters: "dog" only matches "dog". An embedding compares meaning, so "puppy" and "canine" land near "dog" even with no shared characters.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">A lookup hash</p>
+                <p class="text-mt-muted text-xs leading-relaxed">A hash scatters inputs at random so two similar texts get unrelated codes. An embedding does the opposite: similar texts get nearby points, on purpose. Nearness is the whole feature.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">An embedding turns a piece of text into a point in space (a vector, a fixed-length list of numbers).</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">The space is arranged so that close together means similar in meaning, not similar in spelling.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">That reframes finding the right passage as a distance problem, which the next lessons measure and search.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/why-rag/the-pipeline" prevLabel="Prev: The Pipeline, End to End"
+        nextHref="/embeddings/measuring-closeness" nextLabel="Next: Measuring Closeness"
+    />
+
+</LessonLayout>

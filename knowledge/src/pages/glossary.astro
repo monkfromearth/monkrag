@@ -1,0 +1,149 @@
+---
+import '../styles/global.css';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const groups = [
+  {
+    unit: 'Why RAG', color: 'accent',
+    terms: [
+      ['RAG (retrieval-augmented generation)', 'Answering with a model that reads sources you hand it, instead of relying on memory. Retrieve the relevant passages first, then generate the answer from them.'],
+      ['Grounding', 'Tying the answer to specific retrieved passages, so it reflects a source rather than what the model recalls from memory.'],
+      ['Hallucination', 'A fluent, confident answer that is not supported by any source. What a pure-memory model produces when it has no real answer available.'],
+      ['Knowledge cutoff', 'The date the training data ends. Anything after it is absent from the weights, so the model can only guess about it.'],
+    ],
+  },
+  {
+    unit: 'Embeddings', color: 'lav',
+    terms: [
+      ['Embedding', 'A list of numbers (a vector) that places a piece of text in a space where nearby means similar in meaning.'],
+      ['Vector', 'The list of numbers itself. A point in a high-dimensional space.'],
+      ['Cosine similarity', 'A closeness score read as the angle between two vectors: 1 is the same direction (very similar), 0 is unrelated, negative is opposite.'],
+      ['Chunking', 'Splitting a document into smaller passages so each can be embedded and retrieved on its own. Chunk size and overlap trade precision against context.'],
+    ],
+  },
+  {
+    unit: 'Retrieval', color: 'blue',
+    terms: [
+      ['Vector store', 'A store of (vector, passage) pairs. You insert passages at ingest and ask it for the ones nearest a query.'],
+      ['Nearest-neighbor search', 'Finding the stored vectors closest to the query vector. Exact (brute force) compares against all of them; approximate trades a little accuracy for speed.'],
+      ['ANN (approximate nearest neighbor)', 'A faster search that returns almost-nearest results, used when comparing against every vector is too slow.'],
+      ['Top-k', 'The k nearest passages the search returns, for a chosen number k.'],
+      ['Recall@k', 'Of all the truly relevant passages, the fraction that landed in the top k. The main score for how good retrieval is.'],
+      ['Hybrid retrieval', 'Combining keyword search (good at exact terms) with vector search (good at meaning), because each catches what the other misses.'],
+    ],
+  },
+  {
+    unit: 'Augmentation', color: 'rose',
+    terms: [
+      ['Token', 'A small chunk of text the model reads, roughly a word or word-piece. Both the prompt and the answer are measured in tokens.'],
+      ['Context window', 'The maximum number of tokens a model can take in at once. The hard limit on how much you can put in the prompt.'],
+      ['Context budget', 'The room left for passages after the question and the expected answer are accounted for, within the context window.'],
+      ['Lost in the middle', 'The tendency of a model to attend to the start and end of a long prompt more than the middle, so placement of a key passage matters.'],
+    ],
+  },
+  {
+    unit: 'Generation', color: 'green',
+    terms: [
+      ['Citation', 'A pointer in the answer back to the passage it came from, so a reader can check it.'],
+      ['Faithfulness', 'Whether the answer actually follows from the provided context. Distinct from correctness: an answer can be true yet unfaithful, or faithful yet wrong about the world.'],
+      ['Streaming', 'Sending the answer one token at a time as it is generated, so the reader sees words appear instead of waiting for the whole reply.'],
+      ['Time-to-first-token', 'How long until the first word appears. Streaming lowers this even when the total time is unchanged.'],
+    ],
+  },
+  {
+    unit: 'Reranking', color: 'amber',
+    terms: [
+      ['Bi-encoder', 'The fast scout. It embeds the query and each passage separately, so passage vectors can be precomputed and scored cheaply, at the cost of accuracy.'],
+      ['Cross-encoder', 'The careful judge. It runs the query and a passage through the model together, which is far more accurate and far more expensive, so it only runs on a few candidates.'],
+      ['Reranking', 'A second pass that re-scores the top candidates from search with a more accurate model, to push the best passages to the top.'],
+      ['Retrieve-then-rerank', 'The two-stage pattern: cast a wide net cheaply with search, then rerank the top of it carefully. More quality, more latency.'],
+    ],
+  },
+  {
+    unit: 'Serving', color: 'accent',
+    terms: [
+      ['Latency', 'How long a request takes. Measured across the whole pipeline and per hop.'],
+      ['p50 and p99', 'Percentiles of latency: p50 is the typical request, p99 is the slow one-in-a-hundred (the tail). Users feel the tail.'],
+      ['Latency budget', 'A ceiling you hold the p99 under. Because the hops run in sequence, the total is their sum and the slowest hop dominates.'],
+      ['Embedding cache', 'A store of already-computed embeddings keyed by the text, so repeated queries and passages skip the embedding step. Measured by hit rate.'],
+      ['Hit rate', 'The fraction of lookups the cache can answer without recomputing. Higher hit rate means more latency and cost saved.'],
+    ],
+  },
+];
+const C = {
+  accent: 'text-mt-accent bg-mt-accentLight',
+  lav: 'text-mt-lav bg-mt-lavLight',
+  blue: 'text-mt-blue bg-mt-blueLight',
+  rose: 'text-mt-rose bg-mt-roseLight',
+  green: 'text-mt-green bg-mt-greenLight',
+  amber: 'text-mt-amber bg-mt-amberLight',
+};
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>monkrag · Glossary</title>
+    <meta name="description" content="Every term in the monkrag course, in plain English first and the precise term second: embeddings, retrieval, grounding, reranking, and the latency budget.">
+    <link rel="icon" type="image/svg+xml" href={base + "/logo.svg"} />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="font-sans text-mt-text min-h-screen">
+
+    <header class="border-b border-mt-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href={base + "/"} class="flex items-center gap-3">
+                <img src={base + "/logo.svg"} alt="monkrag" class="h-7 w-auto" />
+                <span class="font-bold text-lg leading-none">monkrag</span>
+            </a>
+            <div class="flex items-center gap-5 text-sm text-mt-muted">
+                <a href={base + "/learn"} class="hover:text-mt-text transition-colors">Course</a>
+                <a href="https://github.com/monkfromearth/monkrag" class="text-mt-accent hover:underline">GitHub</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-6 py-12">
+        <section class="mb-12">
+            <h1 class="text-3xl font-extrabold tracking-tight mb-3">Glossary</h1>
+            <p class="text-mt-muted text-lg leading-relaxed">Every term the course uses, in plain English first and the precise name second. Grouped by the unit it belongs to.</p>
+        </section>
+
+        {groups.map((g) => (
+            <section class="mb-10">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class={`tag px-2 py-0.5 rounded-full ${C[g.color as keyof typeof C]}`} style="font-size:0.7rem;font-weight:600;">{g.unit}</span>
+                </div>
+                <dl class="space-y-4">
+                    {g.terms.map((t) => (
+                        <div class="bg-white border border-mt-border rounded-xl p-5">
+                            <dt class="font-semibold text-sm mb-1">{t[0]}</dt>
+                            <dd class="text-mt-muted text-sm leading-relaxed">{t[1]}</dd>
+                        </div>
+                    ))}
+                </dl>
+            </section>
+        ))}
+
+        <nav class="flex items-center justify-between pt-8 border-t border-mt-border">
+            <a href={base + "/serving/the-whole-service"} class="flex items-center gap-2 text-mt-muted hover:text-mt-text transition-colors text-sm">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                Prev: The Whole Service
+            </a>
+            <a href={base + "/learn"} class="flex items-center gap-2 text-mt-accent hover:text-mt-accent/80 transition-colors text-sm font-semibold">
+                Course map
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </nav>
+    </main>
+
+    <footer class="border-t border-mt-border py-8 text-center text-mt-muted text-sm">
+        <p>monkrag &middot; <a href="https://github.com/monkfromearth/monkrag" class="text-mt-accent hover:underline">GitHub</a></p>
+    </footer>
+
+</body>
+</html>

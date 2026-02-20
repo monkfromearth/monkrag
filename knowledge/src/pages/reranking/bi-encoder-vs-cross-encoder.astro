@@ -1,0 +1,110 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+import ScoutJudgeDemo from '../../components/demos/ScoutJudgeDemo.astro';
+---
+
+<LessonLayout title="Scout and Judge" lessonNumber="5.2" section="Reranking">
+
+    <LessonHeader lessonNumber="5.2" title="Scout and Judge" description="A fast scout (the bi-encoder) grabs fifty candidates cheaply. A careful judge (the cross-encoder) reads the query and each passage together and re-scores the best few.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">9 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A scout and a judge.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Think of a hiring funnel. A scout skims a thousand resumes fast and flags fifty worth a look. Then
+            a judge sits down with the question and each of those fifty resumes side by side, reads them
+            properly, and ranks the best handful. The scout is cheap and broad. The judge is slow and sharp.
+            You would never run the judge over a thousand resumes, and you would never trust the scout's order
+            for the final call.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Retrieval works the same way. The scout is the bi-encoder from the last lesson. The judge is a
+            different kind of model called a cross-encoder. Together they are the scout-then-judge pattern,
+            and almost every serious retrieval system uses it.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The scout: separate, precomputed, cheap.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The bi-encoder (the scout) turns the question into a vector and turns each passage into its own
+            vector, separately. The passage vectors are computed once, ahead of time, and stored, so at
+            question time you only encode the question and measure which stored vectors sit closest. Because
+            the heavy work happened earlier, the scout can run over the entire collection, millions of
+            passages, in a blink.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The price of that speed, as we saw, is that the scout never looks at the question and a passage at
+            the same time. It compares two summaries. Good enough to find a shortlist, too blunt to perfectly
+            order it.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The judge: together, live, expensive.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The cross-encoder (the judge) does the thing the scout cannot. It feeds the question and one
+            passage through the model <strong>together</strong>, as a single joined input, and reads them in
+            light of each other. Now the model can notice that this exact passage answers this exact question,
+            not just that their summaries land nearby. That joined reading is far more accurate.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            It is also far more expensive, and for a clear reason: there is nothing to precompute. The judge's
+            score depends on the question, so it cannot be calculated in advance. You have to run the full
+            model once for every single passage you want scored. Score fifty passages, run the model fifty
+            times. That is why the judge only ever sees a small shortlist, never the whole collection.
+        </p>
+        <InsightBox>
+            <p class="text-sm">The scout scores passages <strong>apart</strong> and can run over everything
+            because the work was precomputed. The judge scores a passage <strong>with</strong> the question
+            and must run fresh each time, so it can only afford a few. Accuracy and reach trade against each
+            other, and you get both by stacking them.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Drag the judge's depth.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The scout hands over fifty candidates. The one dial you control is how many of them the judge
+            actually re-reads, the rerank depth. Drag the handle and watch two numbers move: how good the
+            final ranking gets (precision), and how much extra time the judging adds.
+        </p>
+
+        <ScoutJudgeDemo />
+
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Notice the shape. Precision jumps as you go from judging nothing to judging the top ten, then the
+            gains taper off: by the time you are judging forty or fifty, you are paying for passages the scout
+            had already ranked low for good reason. Latency, meanwhile, just keeps climbing in a straight
+            line, because each extra passage means one more full run of the judge. More judged means better
+            ranking but more time, and the curve bends while the cost does not.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Judging deeper buys precision with <strong>diminishing returns</strong> but
+            charges latency at a <strong>steady rate</strong>. The sweet spot is where the precision curve
+            flattens, not where it tops out.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">The bi-encoder (scout) scores passages separately from precomputed vectors, so it is cheap enough to run over the whole collection.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">The cross-encoder (judge) feeds the question and a passage through the model together, far more accurate, but it must run fresh per passage, so it only sees a shortlist.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Scout-then-judge gives you both reach and accuracy; the rerank depth trades better ranking (with diminishing returns) against steadily rising latency.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/reranking/why-retrieval-isnt-enough" prevLabel="Prev: Why Retrieval Isn't Enough"
+        nextHref="/reranking/retrieve-then-rerank" nextLabel="Next: Retrieve, Then Rerank"
+    />
+
+</LessonLayout>

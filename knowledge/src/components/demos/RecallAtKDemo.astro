@@ -1,0 +1,130 @@
+---
+/**
+ * Recall@k demo (Lesson 2.3). A ranked list of 10 results, rank 1 at top.
+ * A fixed subset is "relevant" (green). Drag the horizontal cut line to set k,
+ * snapped to integers 1..10. Rows above the cut are "retrieved". Recall@k =
+ * relevant-above-cut / total-relevant, shown live as a fraction and a percent.
+ * Direct manipulation, reduced-motion safe. The ranking is illustrative.
+ */
+const W = 360, H = 320;
+const N = 10;            // number of result rows
+const top = 30;          // y of first row
+const rowH = 26;         // spacing between rows
+// which ranks are the truly relevant passages (1-indexed): 4 of them
+const relevant = [1, 3, 4, 8];
+const totalRel = relevant.length;
+const rows = Array.from({ length: N }, (_, i) => {
+  const rank = i + 1;
+  return { rank, y: top + i * rowH, rel: relevant.includes(rank) };
+});
+// each row is rendered below; cut line starts between rank 5 and 6 (k = 5)
+const k0 = 5;
+const cutY = (k: number) => top + k * rowH - rowH / 2; // line sits just below row k
+---
+
+<div class="mt-demo mr-recallk my-6 bg-white border border-mt-border rounded-2xl p-6"
+     data-top={top} data-rowh={rowH} data-n={N} data-totalrel={totalRel} data-k0={k0}
+     data-relevant={relevant.join(',')}>
+    <p class="text-xs uppercase tracking-wide text-mt-muted font-semibold mb-3 text-center">Drag the cut line to set k</p>
+
+    <svg viewBox={`0 0 ${W} ${H}`} class="w-full max-w-md mx-auto block" role="img" aria-label="drag the cut line to set k and watch recall@k change">
+        <!-- result rows: rank label, a bar, a relevance dot -->
+        {rows.map((r) => (
+            <g data-row={r.rank}>
+                <text x="20" y={r.y + 4} text-anchor="end" class="font-mono" font-size="10" fill="#6B6560">{r.rank}</text>
+                <rect data-bar x="32" y={r.y - 7} width="248" height="15" rx="4"
+                      fill={r.rel ? '#EFF8F2' : '#F4F2EF'} stroke={r.rel ? '#4F9D7B' : '#E8E4DF'} stroke-width="1.5"/>
+                {r.rel && (
+                    <text x="44" y={r.y + 4} class="font-mono" font-size="9" fill="#4F9D7B">relevant</text>
+                )}
+                <circle data-dot cx="300" cy={r.y} r="5" fill={r.rel ? '#4F9D7B' : '#D1CDC8'}/>
+            </g>
+        ))}
+
+        <!-- the draggable cut line: everything above it is retrieved -->
+        <g data-cut class="mt-grab" style="cursor:grab">
+            <line data-cutline x1="28" y1={cutY(k0)} x2="316" y2={cutY(k0)} stroke="#5E80C9" stroke-width="2.5" stroke-dasharray="6 4"/>
+            <rect x="316" y={cutY(k0) - 11} width="38" height="22" rx="6" fill="#EEF3FC" stroke="#5E80C9" stroke-width="1.5"/>
+            <text data-klabel x="335" y={cutY(k0) + 4} text-anchor="middle" class="font-mono" font-size="11" font-weight="600" fill="#5E80C9">k=5</text>
+        </g>
+    </svg>
+
+    <div class="mt-4 text-sm max-w-md mx-auto text-center">
+        <p class="leading-relaxed">
+            <span class="text-mt-muted">recall@k =</span>
+            <span data-frac class="font-mono font-semibold text-mt-blue">3 / 4</span>
+            <span class="text-mt-muted">=</span>
+            <span data-pct class="font-mono font-semibold text-mt-green">75%</span>
+        </p>
+        <p class="text-mt-muted text-xs mt-2">An illustrative ranking. Green rows are the truly relevant passages; the dashed line is your top-k cut.</p>
+    </div>
+</div>
+
+<script>
+    import { gsap, draggable, clamp, REDUCED } from '../../lib/interact';
+
+    document.querySelectorAll<HTMLElement>('.mr-recallk').forEach((root) => {
+        const top = Number(root.dataset.top);
+        const rowH = Number(root.dataset.rowh);
+        const N = Number(root.dataset.n);
+        const totalRel = Number(root.dataset.totalrel);
+        const relevant = (root.dataset.relevant || '').split(',').map(Number);
+
+        const svg = root.querySelector<SVGSVGElement>('svg')!;
+        const cut = root.querySelector<SVGGElement>('[data-cut]')!;
+        const line = root.querySelector<SVGLineElement>('[data-cutline]')!;
+        const label = root.querySelector<SVGTextElement>('[data-klabel]')!;
+        const frac = root.querySelector<HTMLElement>('[data-frac]')!;
+        const pct = root.querySelector<HTMLElement>('[data-pct]')!;
+        const rect = cut.querySelector<SVGRectElement>('rect')!;
+
+        // y just below row k (the cut line position for a given k)
+        const cutY = (k: number) => top + k * rowH - rowH / 2;
+        // snap a raw y to the nearest integer k in 1..N
+        const kFromY = (y: number) => clamp(Math.round((y - top + rowH / 2) / rowH), 1, N);
+
+        let k = Number(root.dataset.k0);
+
+        function paint() {
+            const found = relevant.filter((r) => r <= k).length;
+            const recall = found / totalRel;
+            label.textContent = `k=${k}`;
+            frac.textContent = `${found} / ${totalRel}`;
+            pct.textContent = `${Math.round(recall * 100)}%`;
+
+            // dim rows below the cut so "retrieved" is obvious
+            root.querySelectorAll<SVGGElement>('[data-row]').forEach((g) => {
+                const rank = Number(g.dataset.row);
+                g.setAttribute('opacity', rank <= k ? '1' : '0.32');
+            });
+        }
+
+        function setY(y: number) {
+            line.setAttribute('y1', String(y));
+            line.setAttribute('y2', String(y));
+            rect.setAttribute('y', String(y - 11));
+            label.setAttribute('y', String(y + 4));
+        }
+
+        function place(animate: boolean) {
+            const y = cutY(k);
+            if (animate && !REDUCED) {
+                const o = { y: Number(line.getAttribute('y1')) || y };
+                gsap.to(o, { y, duration: 0.18, ease: 'power2.out', overwrite: true, onUpdate: () => setY(o.y) });
+            } else {
+                setY(y);
+            }
+            paint();
+        }
+
+        // drag: follow pointer y, snap k to an integer row (snap the value, ease the line into place)
+        draggable(svg, cut, (_x, y) => {
+            const next = kFromY(y);
+            if (next === k) return;
+            k = next;
+            place(true);
+        });
+
+        place(false);
+    });
+</script>

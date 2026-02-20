@@ -1,0 +1,137 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="The Grounded Answer" lessonNumber="4.1" section="Generation">
+
+    <LessonHeader lessonNumber="4.1" title="The Grounded Answer" description="The model writes the answer using only the passages you gave it, and points back to the one it used.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">An open-book answer that shows its working.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Picture a student in an open-book exam. The good answer is not the one that sounds most
+            confident. It is the one that says "page 14 says this, so the answer is that." You can flip
+            to page 14 and check. The work is visible, so you can trust it.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That is the whole job of the generation step in RAG. By now the search has already found the
+            right passages and the prompt has been assembled (Units 2 and 3). The model's task is narrow:
+            read those passages and write an answer from them, then point back to the passage it used. We
+            call answering only from the provided text <strong>grounding</strong>, and the pointer back to
+            the source a <strong>citation</strong>.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Grounding is a rule you give the model in plain words: answer from the
+            passages I gave you, not from your own memory. The citation is the receipt that lets the
+            reader verify it.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The instruction does the steering.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A model left to its own devices will happily blend what it read with what it half-remembers
+            from training. Grounding closes that door with an instruction at the top of the prompt. The
+            wording is short and blunt, and it carries three asks at once: use only the context, name the
+            source, and say "I do not know" when the context does not cover the question.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="font-mono text-xs text-mt-muted mb-2">a grounding instruction, in spirit</p>
+            <p class="mb-1">Answer the question using only the passages below.</p>
+            <p class="mb-1">After each claim, cite the passage it came from.</p>
+            <p>If the passages do not contain the answer, say you do not know.</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That last line matters more than it looks. Without it, a model treats a silent context as a
+            cue to fall back on memory. With it, "the passages do not say" becomes an allowed answer. We
+            come back to what happens when the model ignores this instruction in lesson 4.3.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Two ways to write the answer: lift it or rephrase it.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            There are two honest styles for a grounded answer. The first copies the words straight out of
+            the passage, like quoting a line from the book (the precise term is <strong>extractive</strong>).
+            It is the safest, because the answer is literally the source text, but it can read stiff and it
+            struggles when the answer is spread across two passages.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The second reads the passages and writes the answer in fresh words, the way you would explain a
+            page to a friend (the precise term is <strong>abstractive</strong>). It reads better and can
+            stitch facts together, but it has more room to drift away from what the source actually said.
+            Most RAG systems lean abstractive and lean on the citation to keep them honest.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1">Extractive (lift it)</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Pulls the answer verbatim from a passage.
+                Hard to get wrong, but rigid and bad at combining sources.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1">Abstractive (rephrase it)</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Reads the passages and writes in its own
+                words. Reads well and merges facts, but can drift, so the citation is what keeps it tied
+                to the source.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A worked example: the Q3 launch.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Say the question is "What shipped in the Q3 launch?" Two passages made it into the prompt. One
+            is the real launch note; the other is a near-miss the search pulled in by accident.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="font-mono text-xs text-mt-muted mb-2">the context handed to the model</p>
+            <p class="mb-2"><span class="font-mono text-mt-green">[1] launch-notes.md</span>:
+            <span class="text-mt-text">"The Q3 launch shipped the billing API and SSO."</span></p>
+            <p><span class="font-mono text-mt-muted">[2] roadmap-draft.md</span>:
+            <span class="text-mt-text">"The mobile app is planned for Q4."</span></p>
+        </div>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-1"><span class="font-semibold text-mt-muted">Q</span>&nbsp; What shipped in the Q3 launch?</p>
+            <p class="mb-1"><span class="font-semibold text-mt-muted">A</span>&nbsp;
+            <span class="font-semibold text-mt-green">The billing API and SSO.</span>
+            <span class="font-mono text-xs text-mt-green/80">[source: 1, launch-notes.md]</span></p>
+            <p class="text-mt-muted text-xs">The model read passage 1, ignored the Q4 roadmap line as
+            off-topic, and tagged where the answer came from. A reader who doubts it can open
+            launch-notes.md and check in seconds.</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That tag, <span class="font-mono text-xs">[source: 1]</span>, is the trust mechanism. It turns
+            an answer you have to take on faith into one you can audit. If the citation points at a passage
+            that does not actually back the claim, you have caught a bad answer before it reached anyone.
+            That check is the backbone of evaluating a RAG system, and the heart of lesson 4.3.
+        </p>
+        <InsightBox>
+            <p class="text-sm">A grounded answer is two things bolted together: a claim, and a pointer to
+            the passage that supports it. Drop the pointer and you are back to taking the model's word for
+            it.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">Grounding is a plain instruction: answer from the passages I gave you, not from memory, and say so when they do not cover the question.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">An answer can lift the source text word for word (extractive) or rephrase it (abstractive); most systems rephrase and rely on the citation to stay honest.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">The citation is the trust mechanism: it lets the reader open the source and check, so an answer becomes something you can audit instead of believe.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/augmentation/lost-in-the-middle" prevLabel="Prev: Lost in the Middle"
+        nextHref="/generation/streaming" nextLabel="Next: Streaming the Answer"
+    />
+
+</LessonLayout>

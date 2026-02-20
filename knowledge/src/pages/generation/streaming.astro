@@ -1,0 +1,111 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="Streaming the Answer" lessonNumber="4.2" section="Generation">
+
+    <LessonHeader lessonNumber="4.2" title="Streaming the Answer" description="The model writes one word at a time. Streaming shows each word as it arrives, so the answer feels fast even when the whole thing takes a while.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">7 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Watching a kettle versus watching it fill a cup.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Two ways to serve tea. In the first, you wait, staring at a closed lid, until the whole pot is
+            ready, then it arrives all at once. In the second, the cup fills in front of you a trickle at a
+            time. The total wait is the same, but the second one feels far shorter, because something is
+            happening the whole time.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That is the difference between waiting for a full answer and <strong>streaming</strong> it. The
+            model does not think up the whole reply and hand it over in one piece. It writes one small chunk
+            at a time, each chunk a word or a piece of a word (the precise term is a <strong>token</strong>).
+            Streaming means we show each token to the reader the instant it is produced, instead of holding
+            them all back until the last one lands.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Streaming does not make the model faster. It changes <strong>when the reader
+            first sees something</strong>, which is most of what "fast" feels like.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">One token after another.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A language model generates left to right, one token at a time, and each new token depends on all
+            the ones before it. It cannot skip ahead or write the end first. So a fifty-token answer is
+            fifty small steps in a row, each taking a few milliseconds.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            This is why two clocks matter, not one. The first is how long until the very first token shows
+            up (the precise term is <strong>time to first token</strong>). The second is how long until the
+            whole answer is done. Streaming attacks the first clock. The reader starts reading the moment
+            word one appears, while the model is still busy writing word twenty.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A worked timeline.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Say a grounded answer takes 1.2 seconds to write in full, and the first token is ready at 0.3
+            seconds. (These are illustrative numbers, not a benchmark.) Here is how the two approaches land
+            for the reader.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="font-semibold text-sm mb-2">Wait for the full answer</p>
+            <p class="text-mt-muted mb-1"><span class="font-mono text-xs">0.0s</span> question sent, blank screen</p>
+            <p class="text-mt-muted mb-1"><span class="font-mono text-xs">0.3s</span> first token ready, still blank screen</p>
+            <p class="text-mt-muted"><span class="font-mono text-xs">1.2s</span> the whole answer appears at once</p>
+            <p class="text-mt-muted text-xs mt-2">The reader stares at nothing for 1.2 seconds.</p>
+        </div>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="font-semibold text-sm mb-2">Stream the answer</p>
+            <p class="text-mt-muted mb-1"><span class="font-mono text-xs">0.0s</span> question sent, blank screen</p>
+            <p class="text-mt-green mb-1"><span class="font-mono text-xs">0.3s</span> first word appears, the reader starts reading</p>
+            <p class="text-mt-muted"><span class="font-mono text-xs">1.2s</span> last word lands, but the reader has been busy since 0.3s</p>
+            <p class="text-mt-muted text-xs mt-2">The felt wait is 0.3 seconds, not 1.2.</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Total work is identical in both: the model still spends 1.2 seconds writing fifty tokens. The
+            only thing that moved is the reader's experience. The wait they actually notice (the precise
+            term is <strong>perceived latency</strong>) dropped from 1.2 seconds to 0.3.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Streaming trades a long silent wait for a short one followed by a steady
+            trickle. The clock on the wall is unchanged; the clock in the reader's head is four times
+            shorter.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Where this fits the budget.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Unit 6 puts the whole pipeline under one time budget and measures the worst-case wait across the
+            four hops. Streaming does not buy you a single millisecond on that measured total, so it will not
+            move the p99 number. What it buys is the gap between the number a stopwatch records and the
+            speed a person feels. Both are real; they are just different clocks, and a serving system has to
+            mind both.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">A model writes one token at a time, left to right; streaming shows each token the instant it is produced instead of holding them all back.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">Two clocks matter: time to first token (when the reader first sees anything) and total time. Streaming shrinks the first, not the second.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Total work is unchanged, so the measured latency budget (Unit 6) is unmoved. Streaming improves only the wait a person feels, the perceived latency.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/generation/the-grounded-answer" prevLabel="Prev: The Grounded Answer"
+        nextHref="/generation/when-it-still-hallucinates" nextLabel="Next: When It Still Hallucinates"
+    />
+
+</LessonLayout>

@@ -1,0 +1,127 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+import LatencyBudgetDemo from '../../components/demos/LatencyBudgetDemo.astro';
+---
+
+<LessonLayout title="The Latency Budget" lessonNumber="6.1" section="Serving">
+
+    <LessonHeader lessonNumber="6.1" title="The Latency Budget" description="Four hops in sequence means four places to spend time. You get one number to defend, the p99, and it is the sum of the stages.">
+        <TagBadge variant="math">math</TagBadge>
+        <TagBadge variant="default">9 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A relay race on a fixed clock.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Picture a relay with four runners. Runner one hands the baton to runner two, who hands it to
+            three, then four. They do not run at the same time. They run one after another, so the team's
+            time is the four leg times added up. Slow down any one runner and the whole team is slower by
+            exactly that much.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A RAG request is that relay. It embeds the question, searches for passages, reranks them, then
+            generates the answer. Each step waits for the one before it. So the time the user waits is the
+            sum of the four steps, and a budget is just the clock you promised to beat.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The typical time, and the slow one.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Run the same request a thousand times and the answers do not all take the same number of
+            milliseconds. Some are quick, a few are slow. To talk about speed honestly you pick a point in
+            that spread. Two points matter.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The first is the middle, the time half your requests beat (the median, written p50). That is the
+            typical experience. The second is the slow edge, the time only one request in a hundred is worse
+            than (the 99th percentile, written p99). That is the tail.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-2"><span class="font-mono text-mt-muted">p50</span> &nbsp;the time half your requests are faster than. The day-to-day feel.</p>
+            <p><span class="font-mono text-mt-accent">p99</span> &nbsp;the time only 1 in 100 requests is slower than. The worst your users routinely hit.</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The tail is what people actually feel. A user who fires off a hundred questions in a session is
+            almost certain to land on that slow one, and one bad wait colors the whole impression. So the
+            number you defend is the p99, not the p50. Promising "fast on average" hides the request that
+            makes someone give up.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Drag a stage and watch the budget blow.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Below is the relay drawn as one bar, split into the four stages. Grab the handle under any stage
+            and drag it slower or faster. The total is the sum of all four. There is a budget line at 800ms.
+            Make one stage greedy and watch the total cross the line, even when the other three are lean.
+        </p>
+
+        <LatencyBudgetDemo />
+
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Two lessons fall out of dragging. First, because the stages add up, the slowest one dominates: it
+            is the easiest place to lose your budget and the most valuable place to fix. Second, you cannot
+            spend the same millisecond twice. Every millisecond you hand to reranking is a millisecond
+            generation has to do without, if the total is going to fit.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A worked sum.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Say your budget is a p99 of 800ms. Suppose, for illustration, the stages come in like this:
+            embedding the question takes 90ms, searching the index takes 120ms, generating the answer takes
+            520ms. That adds to 730ms, comfortably under 800. You have 70ms of headroom.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Now you want to add reranking, which lesson 5.3 showed costs roughly 150ms for a sharper ordering.
+            730 plus 150 is 880ms. You are 80ms over. The reranking is not free and your headroom does not
+            cover it, so something has to give: a smaller candidate set, a faster model, a cheaper stage
+            elsewhere, or a looser budget. The arithmetic decides, not the wish.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Sequential stages <strong>add</strong>. The p99 you defend is the sum of the
+            stage p99s, so the slowest hop sets the pace and every new feature has to fit inside the leftover
+            milliseconds, not on top of them.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">What a budget is not</h2>
+        <div class="grid sm:grid-cols-3 gap-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">An average</p>
+                <p class="text-mt-muted text-xs leading-relaxed">A mean hides the tail. A handful of very slow requests barely move the average but ruin the p99, which is the one users remember.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">A per-stage target</p>
+                <p class="text-mt-muted text-xs leading-relaxed">The budget is on the whole request. A stage can be fast and the request still slow, because the total is what the user waits through.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">A nice-to-have</p>
+                <p class="text-mt-muted text-xs leading-relaxed">It is a ceiling you hold the p99 under. Without one, every new step quietly adds time and nobody notices until the request feels sluggish.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">The p50 is the typical time, the p99 is the slow tail, and the tail is what users feel, so the p99 is the number you defend.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">The hops run in sequence, so the total is their sum and the slowest hop dominates the budget.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">A budget is a ceiling you hold the p99 under, and every new feature has to fit inside the leftover milliseconds.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/reranking/retrieve-then-rerank" prevLabel="Prev: Retrieve, Then Rerank"
+        nextHref="/serving/the-embedding-cache" nextLabel="Next: The Embedding Cache"
+    />
+
+</LessonLayout>

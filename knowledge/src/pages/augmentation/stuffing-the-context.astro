@@ -1,0 +1,120 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="Stuffing the Context" lessonNumber="3.1" section="Augmentation">
+
+    <LessonHeader lessonNumber="3.1" title="Stuffing the Context" description="Take the passages you retrieved and build the prompt: the question, the passages as context, and an instruction to answer from them.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Hand someone the pages, then ask.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Picture asking a colleague a question about your company's billing rules. You could ask cold and
+            hope they remember. Or you could slide the two relevant pages across the desk first and say:
+            "answer from these." The second way is calmer and far more likely to be right. That handing-over
+            is exactly what augmentation does for the model.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            By now retrieval has done its job: you have a short list of passages that look relevant to the
+            question (the top results from your search). Augmentation is the next hop. It takes those
+            passages and weaves them into a single block of text, the prompt, that the model will read before
+            it writes a word. Nothing about the model changes. You are just being careful about what it sees.
+        </p>
+
+        <InsightBox>
+            <p class="text-sm">Augmentation is plumbing, not magic. You retrieved passages; now you
+            <strong>arrange</strong> them, the question, and a clear instruction into one prompt the model reads
+            top to bottom.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Three parts in one prompt.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A grounded prompt almost always has the same three parts. First an <strong>instruction</strong>
+            (often called the system instruction) that sets the rules of the game. Then the
+            <strong>context</strong>, the retrieved passages pasted in, usually each one labeled so the model
+            can point back to it. Then the <strong>question</strong> the reader actually asked. Order matters,
+            but the shape is steady.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Here is a tiny skeleton of that shape. It is just to show the parts, not a working system: the real
+            serving code is yours to write.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 font-mono text-xs leading-relaxed text-mt-text">
+            <p class="mb-1 text-mt-rose">Answer using ONLY the context below.</p>
+            <p class="mb-1 text-mt-rose">Cite the source. If the answer is not there, say "I do not know."</p>
+            <p class="mb-1 mt-3 text-mt-muted">Context:</p>
+            <p class="mb-1">[1] &#123;passage one&#125;</p>
+            <p class="mb-1">[2] &#123;passage two&#125;</p>
+            <p class="mt-3 text-mt-muted">Question: &#123;the user's question&#125;</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Three lines of instruction, the labeled passages, the question. That is the whole template. The art
+            is in those instruction lines, which is where the next two parts come in.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Answer only from the context.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The single most important sentence in the prompt is the one that tells the model to answer
+            <strong>only</strong> from what you gave it. Without it, the model treats your passages as a
+            suggestion and happily fills gaps from its own memory, which is the exact behavior RAG exists to
+            stop. With it, you draw a fence: the answer must come from inside the context.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Two more instructions ride alongside it. Tell the model to <strong>cite</strong> the passage it
+            used (that is what those [1] and [2] labels are for, so the reader can check the source). And tell
+            it to say "<strong>I do not know</strong>" when the context simply does not contain the answer.
+            That last one is the hardest behavior to get and the most valuable. A model that admits a gap is
+            worth far more than one that invents a confident, wrong reply.
+        </p>
+
+        <InsightBox>
+            <p class="text-sm">"Answer only from the context, cite your source, and say <strong>I do not
+            know</strong> if it is not here." Those three instructions turn a fluent guesser into an honest
+            reader.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A worked example.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Say the reader asks: "what is the refund window?" Retrieval hands back two passages. The first says
+            "refunds are accepted within 30 days of purchase." The second is about shipping and is not really
+            relevant, but it scored close enough to make the list. You build the prompt with both passages
+            labeled, the three instruction lines on top, and the question at the bottom.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The model reads it and answers: "The refund window is 30 days from purchase [1]." It used passage
+            one, ignored the off-topic passage two, and pointed back to its source. Now imagine the answer was
+            not in either passage. A well-instructed model replies "I do not know based on the provided
+            context" instead of guessing. Same model, same passages: the instruction is what bought you the
+            honesty.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">Augmentation builds one prompt from three parts: an instruction, the retrieved passages as context, and the question.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">The key instruction is to answer only from the context, cite the source, and say "I do not know" when it is not there.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">The model is unchanged. All the leverage is in what you place in front of it and how you tell it to use it.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/retrieval/hybrid-retrieval" prevLabel="Prev: Hybrid Retrieval"
+        nextHref="/augmentation/the-context-budget" nextLabel="Next: The Context Budget"
+    />
+
+</LessonLayout>

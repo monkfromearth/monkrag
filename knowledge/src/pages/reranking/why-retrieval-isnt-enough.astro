@@ -1,0 +1,101 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="Why Retrieval Isn't Enough" lessonNumber="5.1" section="Reranking">
+
+    <LessonHeader lessonNumber="5.1" title="Why Retrieval Isn't Enough" description="Fast search is approximate and scores each passage on its own. The best answer can sit at rank 20, not rank 1.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The librarian who only reads the spines.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Picture asking a librarian for the one book that answers your question, and they have a million
+            books. They cannot open and read each one, that would take all day. So they glance at the spines,
+            grab the fifty that look about right, and hand you the stack roughly in the order they noticed
+            them. Useful, fast, and a little sloppy. The book you actually need might be the twentieth one in
+            the pile, not the first.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That is what the first pass of retrieval does. It is built for speed across a huge pile of
+            passages, so it settles for a rough ordering instead of a careful one. The right answer is
+            usually somewhere near the top, but "near the top" is not the same as "at the top."
+        </p>
+        <InsightBox>
+            <p class="text-sm">First-pass retrieval is tuned to be <strong>fast over many candidates</strong>,
+            not to be <strong>exactly right about the order</strong>. Speed and precise ranking pull in
+            opposite directions, and the first pass picks speed.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">It scores each passage on its own.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Here is the deeper reason the order is rough. The fast search uses what is called a bi-encoder:
+            it turns the question into a vector (a list of numbers that stands for its meaning) and turns each
+            passage into its own vector, separately. Then it ranks passages by how close their vector sits to
+            the question's. Two encoders, run apart, never looking at each other.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Doing it separately is exactly why it is cheap. The passage vectors are computed once, ahead of
+            time, and stored. When a question comes in you only have to encode the question and measure
+            distances. Nothing about the passages has to run again. That precomputation is the whole trick
+            that makes search fast.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            But it comes at a cost: the model never sees the question and a passage at the same moment. It
+            cannot notice that this particular passage answers this particular question, only that their two
+            summaries land near each other in meaning. A passage can summarize close to your question and
+            still not answer it, and a passage can answer it perfectly while its summary lands a bit further
+            away. The separate scoring is blind to that interaction.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">So the best passage can rank low.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Put those two facts together. Approximate (built for speed) plus separate (each passage scored
+            alone) means the ranking is a rough guess, not a verdict. The truly best passage is reliably
+            somewhere in the top fifty, but it is not reliably at position one. Often it sits at rank eight,
+            or fifteen, or twenty, buried under passages that merely looked similar.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            For a question with one clean answer near the top, that is fine. For a hard question where the
+            real evidence is a few slots down, handing the model only the top few passages means the model
+            never sees the passage it most needed. The answer suffers, and it is not the model's fault: it
+            was never shown the right source.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The fix is not to make the first pass slower. It is to take a second, closer look at just the top
+            handful of candidates the first pass already found. Cheap-and-wide first, careful-and-narrow
+            second. The next lesson builds that second look.
+        </p>
+        <InsightBox>
+            <p class="text-sm">The first pass gives you a good <strong>shortlist</strong> and a bad
+            <strong>order</strong>. You trust it to find the right passages somewhere in the top fifty; you do
+            not trust it to put the best one first.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">First-pass search optimizes for speed over a large pile of candidates, so its ranking is rough, not exact.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">A bi-encoder scores the question and each passage separately (passage vectors are precomputed), which is fast but blind to how a specific question and passage interact.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">The truly best passage often sits well below rank one, so you want a second, closer look at the top candidates.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/generation/when-it-still-hallucinates" prevLabel="Prev: When It Still Hallucinates"
+        nextHref="/reranking/bi-encoder-vs-cross-encoder" nextLabel="Next: Scout and Judge"
+    />
+
+</LessonLayout>

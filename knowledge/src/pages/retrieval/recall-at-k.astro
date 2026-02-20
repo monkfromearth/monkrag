@@ -1,0 +1,129 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+import RecallAtKDemo from '../../components/demos/RecallAtKDemo.astro';
+---
+
+<LessonLayout title="Recall@k, the Metric" lessonNumber="2.3" section="Retrieval">
+
+    <LessonHeader lessonNumber="2.3" title="Recall@k, the Metric" description="How do you know retrieval is any good? Recall@k counts how many of the truly relevant passages you caught in the top k.">
+        <TagBadge variant="math">math</TagBadge>
+        <TagBadge variant="default">9 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Did the net catch the fish?</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Picture a pond with exactly 4 fish you care about. You cast a net and pull up 5 things. If 3 of
+            those are the fish you wanted, you caught 3 of the 4 that mattered. You missed one. That fraction,
+            3 out of 4, is the whole idea behind recall@k. It answers one plain question about retrieval: of
+            the passages that truly answer the question, how many did we actually bring back in our shortlist?
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Retrieval hands the next stage a shortlist of the top k passages (the k nearest points, from the
+            last lesson). Recall@k is the score that tells you whether that shortlist contained the passages
+            you needed. If the right passage never makes the shortlist, the model can never use it, so this is
+            the number that decides whether the rest of the pipeline even has a chance.
+        </p>
+
+        <InsightBox>
+            <p class="text-sm">Recall@k asks: <strong>of all the truly relevant passages, what fraction landed
+            in the top k?</strong> A passage that misses the shortlist is invisible to everything downstream.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The formula, in plain terms.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            One small fraction. The top of the fraction is how many relevant passages you found inside your
+            top k. The bottom is how many relevant passages exist in total.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed text-center">
+            <p class="font-mono">recall@k = (relevant passages in the top k) &divide; (total relevant passages)</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Note what is on the bottom: the total number that are relevant, not k. You are not asking "how
+            much of my shortlist was good." You are asking "how much of the good stuff did I capture." That is
+            why a perfect recall@k of 1.0 means every relevant passage made it in, and you missed nothing.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Worked example.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Say a question has 4 truly relevant passages sitting in your store. You retrieve the top 5 and 3
+            of those 5 turn out to be relevant. Then recall@5 = 3 &divide; 4 = 0.75, or 75%. You caught three
+            quarters of what mattered and let one slip through.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Now drag the cut line below to set k yourself. Watch the fraction: as you let more passages into
+            the shortlist, you scoop up more of the relevant ones, so recall climbs. It rises in steps,
+            because it only moves when the cut crosses one of the relevant rows.
+        </p>
+
+        <RecallAtKDemo />
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Recall is not precision.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            These two get muddled, so here is the one-line difference. Recall asks how much of the good stuff
+            you caught (out of all relevant passages). Precision asks how clean your catch was (out of what
+            you pulled back, how much was actually relevant). Back to the pond: catch 3 of 4 fish in a net of
+            5 things, and recall is 3/4 while precision is 3/5. Same haul, two different questions.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-2">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1"><span class="text-mt-blue">Recall</span>, did we miss anything?</p>
+                <p class="text-mt-muted text-xs leading-relaxed">relevant found, divided by total relevant. For
+                RAG this usually matters most: a missed passage cannot be recovered later in the pipeline.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1"><span class="text-mt-blue">Precision</span>, how clean was it?</p>
+                <p class="text-mt-muted text-xs leading-relaxed">relevant found, divided by how many you pulled
+                back. It punishes dragging in junk, the cost a bigger k quietly racks up.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Why bigger k is not free.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            There is an easy way to make recall@k look great: make k huge. Return the top 1000 and you will
+            almost certainly catch every relevant passage, so recall heads toward 1.0. But you also drag in
+            hundreds of irrelevant passages, which is exactly the noise precision was measuring. That noise is
+            not harmless: every extra passage costs space in the prompt and money in tokens, and it can bury
+            the real answer (the "lost in the middle" effect in Unit 3).
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            So k is a dial with a real trade behind it. Too small and you miss relevant passages (low recall).
+            Too large and you flood the context with junk (low precision, higher cost). Choosing k well, and
+            later re-sorting the shortlist with a reranker, is how you get high recall without paying for all
+            the noise.
+        </p>
+
+        <InsightBox>
+            <p class="text-sm">A bigger k raises recall but drags in noise and cost. <strong>The skill is
+            catching the relevant passages at the smallest k you can get away with.</strong></p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">Recall@k is the relevant passages found in the top k, divided by the total relevant passages.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">Recall asks what you missed (out of all relevant); precision asks how clean your catch was (out of what you returned).</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">A bigger k raises recall but drags in noise and cost, so the goal is high recall at the smallest workable k.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/retrieval/nearest-neighbor-search" prevLabel="Prev: Nearest-Neighbor Search"
+        nextHref="/retrieval/hybrid-retrieval" nextLabel="Next: Hybrid Retrieval"
+    />
+
+</LessonLayout>

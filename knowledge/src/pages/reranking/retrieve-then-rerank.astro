@@ -1,0 +1,105 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="Retrieve, Then Rerank" lessonNumber="5.3" section="Reranking">
+
+    <LessonHeader lessonNumber="5.3" title="Retrieve, Then Rerank" description="The two-stage pattern: cast a wide net cheaply, then rerank the top of it carefully. More quality, more latency. The question is how much of each.">
+        <TagBadge variant="math">math</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Wide net, then a close look.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A fisherman casts a wide net to haul in a big, messy catch, then sorts the keepers on deck by hand.
+            The net is fast and indiscriminate. The sorting is slow and careful, but it only touches what the
+            net already brought up. That is the whole pattern: <strong>retrieve wide and cheap, then rerank
+            narrow and careful</strong>.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            We have the two players from the last lesson, the scout (bi-encoder) and the judge (cross-encoder).
+            This lesson is about wiring them into the pipeline you have been building, and about the one number
+            that now matters: how much you rerank.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The change to the pipeline.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Until now the flow was: search returns the top few passages, those go into the prompt, the model
+            answers. Reranking splits that first step in two. Search now returns a <strong>wide</strong> list,
+            say the top fifty (call it N). The judge re-scores those fifty and keeps only the best
+            <strong>few</strong>, say five (call it k). Those five are the ones that go into the prompt.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-2 font-semibold text-mt-muted">before</p>
+            <p class="mb-3"><span class="font-mono text-mt-muted">question</span> &rarr; search returns top 5 &rarr; <span class="font-mono">prompt</span> &rarr; answer</p>
+            <p class="mb-2 font-semibold text-mt-amber">after</p>
+            <p><span class="font-mono text-mt-muted">question</span> &rarr; search returns wide N=50 &rarr; <span class="text-mt-amber font-semibold">rerank</span> to best k=5 &rarr; <span class="font-mono">prompt</span> &rarr; answer</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The prompt still gets five passages, same as before. What changed is how those five were chosen:
+            not the scout's rough order, but the judge's careful one over a much bigger candidate pool. The
+            best passage, which the scout might have left at rank twenty, now has a chance to make the final
+            five.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The dial: how many you rerank.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            N is the dial. It is how deep into the scout's pile the judge reaches, the rerank depth you dragged
+            in the 5.2 demo. Turn it up and the final five are chosen from a wider, better-sorted pool, so
+            quality climbs. But every extra passage in N is one more fresh run of the judge, so latency climbs
+            too. Quality up, latency up, both driven by the same knob.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            And recall the shape from the demo. Quality rises with diminishing returns: the jump from N=10 to
+            N=20 buys a lot, the jump from N=40 to N=50 buys almost nothing. Latency, though, rises in a
+            roughly straight line, because the judge's cost is simply (cost per passage) times N. So the two
+            curves diverge. Past a point you are paying steady extra milliseconds for quality you can barely
+            measure.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Reranking adds one tunable number, the rerank depth N. Bigger N means better
+            final passages but more latency. Because quality flattens while latency keeps climbing, the right
+            N is a <strong>budget question</strong>, not a "more is better" one.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Which sets up the real question.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            So reranking is clearly worth something: it rescues the good passage the scout buried. The honest
+            question is not "does it help" but "is the help worth the milliseconds it costs, given everything
+            else competing for the same time budget?" Embedding, search, and generation each want a slice of
+            the clock too. Reranking has to earn its slice.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That is exactly the question the next unit takes head on: a fixed latency budget split across all
+            the stages, and a measured verdict on whether reranking pays for itself. We have the dial; next we
+            learn to spend it.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">Reranking splits the first step in two: search returns a wide N (say 50), then a reranker keeps the best k (say 5) for the prompt.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">The rerank depth N is the dial: bigger N means better final passages (with diminishing returns) but steadily more latency.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Because quality flattens while latency climbs, choosing N is a budget decision, which sets up the latency-and-cost question in the next unit.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/reranking/bi-encoder-vs-cross-encoder" prevLabel="Prev: Scout and Judge"
+        nextHref="/serving/the-latency-budget" nextLabel="Next: The Latency Budget"
+    />
+
+</LessonLayout>

@@ -1,0 +1,132 @@
+---
+/**
+ * Chunking demo (Lesson 1.3). A long passage shown as a strip of word-blocks.
+ * Drag the handle along the track to set chunk size in words, snapped to clean steps.
+ * The chunk boundaries redraw live (alternating colors), the chunk count updates,
+ * and a short note flips between "small: precise, loses context" and "large: broad, imprecise".
+ * Direct manipulation, reduced-motion safe. The passage is illustrative.
+ */
+const W = 360, H = 170;
+const WORDS = 30;            // total words in the toy passage
+const STEPS = [5, 10, 15, 20, 25, 30];
+const START_SIZE = 10;
+
+// strip geometry
+const stripX = 16, stripY = 30, stripW = W - 32;
+const cellW = stripW / WORDS;
+const cellH = 26;
+
+// track geometry (the draggable size control)
+const trackY = 110;
+const trackX0 = 16, trackX1 = W - 16;
+---
+
+<div class="mt-demo mr-chunking my-6 bg-white border border-mt-border rounded-2xl p-6"
+     data-words={WORDS} data-steps={JSON.stringify(STEPS)} data-start={START_SIZE}
+     data-stripx={stripX} data-stripy={stripY} data-cellw={cellW} data-cellh={cellH}
+     data-tracky={trackY} data-trackx0={trackX0} data-trackx1={trackX1}>
+    <p class="text-xs uppercase tracking-wide text-mt-muted font-semibold mb-3 text-center">Drag the handle to set the chunk size</p>
+
+    <svg viewBox={`0 0 ${W} ${H}`} class="w-full max-w-md mx-auto block" role="img" aria-label="drag a handle to set how many words go in each chunk; the document strip re-splits live">
+        <!-- the document strip: WORDS little blocks, painted by chunk in the script -->
+        <g data-strip>
+            {Array.from({ length: WORDS }).map((_, i) => (
+                <rect data-word={i} x={stripX + i * cellW + 0.6} y={stripY} width={cellW - 1.2} height={cellH} rx="2" fill="#E7E2DC"/>
+            ))}
+        </g>
+        <text x="16" y="22" class="font-mono" font-size="9" fill="#6B6560">one document, {WORDS} words</text>
+
+        <!-- the size track -->
+        <line x1={trackX0} y1={trackY} x2={trackX1} y2={trackY} stroke="#E7E2DC" stroke-width="3" stroke-linecap="round"/>
+        <text x="16" y={trackY + 24} class="font-mono" font-size="9" fill="#6B6560">chunk size:</text>
+        <text data-sizelabel x={trackX1} y={trackY + 24} text-anchor="end" class="font-mono" font-size="11" font-weight="600" fill="#C96F5A">10 words</text>
+
+        <!-- draggable handle -->
+        <g data-handle class="mt-grab" style="cursor:grab">
+            <circle cx={trackX0} cy={trackY} r="9" fill="#C96F5A" stroke="#fff" stroke-width="2.5"/>
+        </g>
+    </svg>
+
+    <div class="mt-4 text-sm max-w-md mx-auto">
+        <p class="mb-1"><span class="font-semibold text-mt-text">Chunks:</span> <span data-count class="font-mono text-mt-accent">3</span></p>
+        <p data-note class="text-mt-muted leading-relaxed"></p>
+    </div>
+</div>
+
+<script>
+    import { gsap, draggable, clamp, REDUCED } from '../../lib/interact';
+
+    document.querySelectorAll<HTMLElement>('.mr-chunking').forEach((root) => {
+        const words = Number(root.dataset.words);
+        const steps: number[] = JSON.parse(root.dataset.steps!);
+        const stripX = Number(root.dataset.stripx);
+        const cellW = Number(root.dataset.cellw);
+        const trackY = Number(root.dataset.tracky);
+        const trackX0 = Number(root.dataset.trackx0);
+        const trackX1 = Number(root.dataset.trackx1);
+
+        const svg = root.querySelector<SVGSVGElement>('svg')!;
+        const handleG = root.querySelector<SVGGElement>('[data-handle]')!;
+        const knob = handleG.querySelector<SVGCircleElement>('circle')!;
+        const blocks = Array.from(root.querySelectorAll<SVGRectElement>('[data-word]'));
+        const sizeLabel = root.querySelector<SVGTextElement>('[data-sizelabel]')!;
+        const countEl = root.querySelector<HTMLElement>('[data-count]')!;
+        const noteEl = root.querySelector<HTMLElement>('[data-note]')!;
+
+        // alternating chunk colors (warm vs lavender), restful, not loud
+        const chunkFill = ['#F4D9CF', '#DBDBEE'];
+
+        const minStep = steps[0], maxStep = steps[steps.length - 1];
+
+        function noteFor(size: number): string {
+            if (size <= 10) return 'Small chunks: precise retrieval, but a passage can lose the surrounding meaning.';
+            if (size >= 25) return 'Large chunks: broad context, but retrieval gets imprecise and you spend more of the budget.';
+            return 'A middle size: enough context to make sense, precise enough to find.';
+        }
+
+        function paint(size: number) {
+            // color each word by which chunk it falls in
+            blocks.forEach((b, i) => {
+                const chunk = Math.floor(i / size);
+                b.setAttribute('fill', chunkFill[chunk % 2]);
+            });
+            const count = Math.ceil(words / size);
+            sizeLabel.textContent = `${size} words`;
+            countEl.textContent = String(count);
+            noteEl.textContent = noteFor(size);
+        }
+
+        function placeHandle(size: number, animate: boolean) {
+            // map size -> x along the track
+            const t = (size - minStep) / (maxStep - minStep);
+            const x = trackX0 + t * (trackX1 - trackX0);
+            if (REDUCED || !animate) {
+                gsap.set(knob, { attr: { cx: x } });
+            } else {
+                gsap.to(knob, { attr: { cx: x }, duration: 0.2, ease: 'power2.out', overwrite: true });
+            }
+        }
+
+        function snap(x: number): number {
+            // x along track -> nearest clean step
+            const t = clamp((x - trackX0) / (trackX1 - trackX0), 0, 1);
+            const raw = minStep + t * (maxStep - minStep);
+            let best = steps[0];
+            for (const s of steps) if (Math.abs(s - raw) < Math.abs(best - raw)) best = s;
+            return best;
+        }
+
+        let size = Number(root.dataset.start);
+
+        draggable(svg, handleG, (x) => {
+            const next = snap(x);
+            if (next !== size) { size = next; paint(size); }
+            placeHandle(size, false);
+        });
+        handleG.addEventListener('pointerup', () => placeHandle(size, true));
+        handleG.addEventListener('pointercancel', () => placeHandle(size, true));
+
+        paint(size);
+        placeHandle(size, false);
+    });
+</script>

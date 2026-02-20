@@ -1,0 +1,105 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="The Whole Service" lessonNumber="6.4" section="Serving">
+
+    <LessonHeader lessonNumber="6.4" title="The Whole Service" description="Every piece in one place: embed (cached), search, rerank, augment, generate, all under one latency and cost budget. This is monkrag.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">9 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Everything you learned, on one path.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            You started with four hops: embed, search, augment, generate. That was the honest skeleton. Over
+            six units you added the parts that make it actually work, and now they all sit on one request
+            path. A question comes in and runs the whole gauntlet, once, while the user waits.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Here is the assembled picture. Each step is a lesson you already have.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-2"><span class="font-mono text-mt-muted">question</span></p>
+            <p class="mb-2 ml-4">&rarr; <span class="font-mono text-mt-green">cache?</span> hit returns the vector, miss embeds it (and stores it)</p>
+            <p class="mb-2 ml-4">&rarr; <span class="font-mono">search</span> the index for the nearest passages</p>
+            <p class="mb-2 ml-4">&rarr; <span class="font-mono">rerank</span> those candidates with the cross-encoder (if it earns its cost)</p>
+            <p class="mb-2 ml-4">&rarr; <span class="font-mono">augment</span>, paste the top passages into the prompt, mind the order</p>
+            <p class="mb-2 ml-4">&rarr; <span class="font-mono">generate</span> the grounded answer with citations</p>
+            <p class="text-mt-muted text-xs mt-2">All of it inside one p99 budget, with one cost-per-query total. The cache sits in front of embed; rerank sits between search and augment.</p>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Where the time and money land.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Two things wrap the whole path: a time budget and a money budget. They do not land evenly. Most of
+            the time usually sits in generation, because the model writes token by token, and a chunk sits in
+            reranking if you turned it on. The cache claws time back on the embed step whenever a query
+            repeats.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The money lands wherever you call an outside model: embedding each query and miss, and generating
+            each answer. The cache cuts the embedding bill on hits. Reranking adds compute. Searching your own
+            index is cheap because you built it and it runs on your machine. The skill is knowing which step
+            is the expensive one for your traffic, and spending your attention there.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">What "done" looks like.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A RAG pipeline that runs is not finished. Wiring is the easy part. The senior bar, the thing that
+            makes this a real artifact instead of glue, is the measurement. Three things mark it done.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A measured budget: a p99 number you can defend, broken down across the stages, produced by a
+            script anyone can rerun. A written verdict on each upgrade: does the cache earn its cost, does
+            reranking, stated in recall and milliseconds, not in adjectives. And a baseline it beats: the
+            naive version measured the same way, so every claim of "better" has a number behind it and
+            something to be better than.
+        </p>
+        <InsightBox>
+            <p class="text-sm">A pipeline that runs is the start, not the finish. "Done" is a <strong>measured
+            p99 budget</strong>, a written verdict on each upgrade in recall and milliseconds, and a baseline
+            it provably beats. The measurement is the deliverable.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Now you write the system.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            This course taught the ideas. How text becomes geometry, how nearest-neighbor search finds the
+            right passages, how the prompt gets assembled and ordered, how the model answers from sources, how
+            a scout and a judge sharpen the ranking, and how the whole thing holds under one budget. You have
+            the concepts and the worked numbers behind every step.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            What is left is the part where understanding sticks: the code. The course deliberately did not
+            hand you monkrag's implementation, because the point was never to copy a system. It was to
+            understand one well enough to build your own. So that is the handoff. You know what each hop does
+            and why, what to measure, and what "done" means. Now go write the system, measure it honestly, and
+            let the numbers tell you whether it earned its keep.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">The full service is the four hops plus a cache in front of embed and rerank between search and augment, all under one budget.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">Most time lands in generation (and rerank if on); money lands wherever you call an outside model, and the cache claws both back on hits.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Done means a measured p99 budget, a written verdict on each upgrade, and a baseline it beats. The course gave you the ideas; now you write the system.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/serving/does-rerank-earn-its-cost" prevLabel="Prev: Does Rerank Earn Its Cost?"
+        nextHref="/glossary" nextLabel="Next: Glossary"
+    />
+
+</LessonLayout>

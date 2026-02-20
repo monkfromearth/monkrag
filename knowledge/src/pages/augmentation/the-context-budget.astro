@@ -1,0 +1,120 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="The Context Budget" lessonNumber="3.2" section="Augmentation">
+
+    <LessonHeader lessonNumber="3.2" title="The Context Budget" description="The prompt has a size limit (the context window). Passages cost tokens, so you can only fit so many.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A suitcase, not a moving truck.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            You cannot pour every passage you retrieved into the prompt. The prompt has a fixed size, like a
+            suitcase. Pack carefully and the essentials fit. Try to cram in everything and the zipper will not
+            close. In the last lesson you learned how to build the prompt. This one is about the wall you hit:
+            it can only hold so much.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That wall is the <strong>context window</strong>, the maximum amount of text a model can read at
+            once. Everything you send has to fit inside it: the instruction, the passages, the question, and
+            the answer the model writes back. Go over and the request simply will not run.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">What a token is.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The window is not measured in words or characters. It is measured in <strong>tokens</strong>. A
+            token is a small chunk of text, roughly a word or a piece of a word. Common short words are usually
+            one token; longer or rarer words get split into two or three. A loose rule of thumb in English is
+            that a token is about three-quarters of a word, so 100 tokens land near 75 words.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The number is approximate and depends on the model's tokenizer, the rulebook that does the
+            splitting. For budgeting you do not need the exact count. You need a feel for the trade: more text
+            in means more tokens spent, and the window holds only so many.
+        </p>
+
+        <InsightBox>
+            <p class="text-sm">A <strong>token</strong> is a chunk of text, about a word or a word-piece. The
+            context window is a budget measured in tokens, and everything you send draws it down.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The usable budget is smaller than the window.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Here is the catch people miss. The window is not all yours for passages. The question takes some.
+            The instruction takes some. And crucially, the model needs room to <strong>write the answer</strong>,
+            since the reply lives in the same window as the input. So the budget for passages is the window
+            minus the question minus the instruction minus the space you reserve for the answer.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Reserve too little for the answer and the model gets cut off mid-sentence. Reserve too much and you
+            waste room you could have spent on a relevant passage. The usable passage budget is what is left
+            after everyone else takes their slice.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A worked example (numbers illustrative).</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Say your model has a window of 8,000 tokens. The question and instruction together cost about 200
+            tokens. You want room for a thorough answer, so you reserve 800 tokens for the reply. That leaves
+            8,000 minus 200 minus 800, which is 7,000 tokens for passages.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Now suppose each retrieved passage runs about 350 tokens. How many fit? 7,000 divided by 350 is 20
+            passages. That is your ceiling for this question. Retrieval might have returned 50 candidates, but
+            only the top 20 will fit, so order and relevance suddenly matter a lot.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-1"><span class="font-mono text-mt-muted">window</span> 8,000 &minus; <span class="font-mono text-mt-muted">question+instruction</span> 200 &minus; <span class="font-mono text-mt-muted">answer room</span> 800 = <span class="font-mono text-mt-rose">7,000 for passages</span></p>
+            <p class="mb-1"><span class="font-mono text-mt-rose">7,000</span> &divide; <span class="font-mono text-mt-muted">~350 per passage</span> = <span class="font-mono text-mt-rose">~20 passages fit</span></p>
+            <p class="text-mt-muted text-xs">Numbers illustrative. Real windows and token counts vary by model and tokenizer.</p>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The chunk-size tension, back again.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            This is where chunking comes home to roost (lesson 1.3, where you split a document into cards). Big
+            chunks carry more context per passage but cost more tokens each, so fewer fit in the budget. Small
+            chunks are cheap, so many fit, but each one carries less surrounding context and might lose the
+            thread.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            There is no free lunch. A bigger chunk and fitting more chunks are pulling on the same rope, the
+            token budget. The right chunk size is the one that puts the most <em>relevant</em> material in the
+            window, not the most material. The budget is the constraint that forces you to choose.
+        </p>
+
+        <InsightBox>
+            <p class="text-sm">Chunk size and how many passages fit are the same trade-off seen twice. The budget
+            is fixed, so bigger chunks mean fewer of them. Aim for the most relevant tokens, not the most tokens.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">The context window is a fixed token budget, and tokens are small chunks of text (about a word each).</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">Usable passage budget is the window minus the question, the instruction, and the room you reserve for the answer.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Chunk size and how many passages fit pull on the same budget, so optimize for relevant tokens, not total tokens.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/augmentation/stuffing-the-context" prevLabel="Prev: Stuffing the Context"
+        nextHref="/augmentation/lost-in-the-middle" nextLabel="Next: Lost in the Middle"
+    />
+
+</LessonLayout>

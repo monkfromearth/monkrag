@@ -1,0 +1,115 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="The Vector Store" lessonNumber="2.1" section="Retrieval">
+
+    <LessonHeader lessonNumber="2.1" title="The Vector Store" description="Where the passage vectors live, and how you ask it for the ones nearest a query.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">7 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A catalog organized by meaning.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Think of an old library catalog. A title catalog lets you find a book if you already know its
+            name. A subject catalog is different: you walk up and say "I want something about volcanoes,"
+            and it hands you the shelf that is about that, even books you never knew existed. A vector store
+            is the second kind of catalog. You do not ask it for a passage by name. You ask it for the
+            passages that are about what you mean, and it finds them by closeness of meaning.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            By the end of the last unit, every passage you want to search has been turned into a vector: a
+            list of numbers that pins its meaning to a point in space (its embedding). A vector store is just
+            the place those points live, plus the machinery to find the ones nearest a question.
+        </p>
+
+        <InsightBox>
+            <p class="text-sm">A vector store keeps the <strong>meaning of every passage as a point</strong>,
+            and its one job is to hand back the points sitting closest to a new point you give it.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">What it actually holds.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Each thing in the store is a pair: the <strong>vector</strong> (the point in meaning-space) and
+            the <strong>passage</strong> it came from (the actual text you will later show the reader and the
+            model). The vector is what you search on. The passage is what you get back. You keep both because
+            a point with no text behind it is useless, and text with no point is unsearchable.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-2 font-mono text-mt-muted">a single entry in the store</p>
+            <p class="mb-1"><span class="font-mono text-mt-blue">vector</span> &nbsp;[0.12, -0.47, 0.88, ...]&nbsp; the point</p>
+            <p><span class="font-mono text-mt-green">passage</span> &nbsp;"Refunds are issued within 5 business days."&nbsp; the text</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A real store keeps thousands or millions of these pairs. The text rides along as a payload; the
+            search only ever looks at the vectors.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Two operations, and only two.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            For all its parts, a vector store does two things, at two different moments.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1"><span class="text-mt-blue">Insert</span>, at ingest time</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Once, up front, before any questions arrive.
+                You embed each passage and drop the (vector, passage) pair into the store. This is the slow,
+                bulk step you run when documents change, not when a user asks something.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1"><span class="text-mt-blue">Query</span>, at question time</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Every time someone asks a question, you embed
+                the question into a point and ask the store: which stored points sit closest to this one? Give
+                me the nearest k of them. This is the step that has to be fast.</p>
+            </div>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That nearest-k is the heart of retrieval. The "k" is just how many neighbors you want back, say
+            the 5 closest passages. The next lesson is entirely about how the store finds them. Here, the
+            point is only the shape: you load it once, then query it again and again.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">What a vector store is not</h2>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">A key-value lookup by id</p>
+                <p class="text-mt-muted text-xs leading-relaxed">A regular database fetches the one row whose
+                id you already know. It matches exactly or not at all. A vector store has no "the right id" to
+                ask for. You hand it a meaning and it ranks everything by how near it sits.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">An exact match</p>
+                <p class="text-mt-muted text-xs leading-relaxed">It does not return "the answer." It returns a
+                ranked shortlist of the closest candidates, best guess first. Sorting the good ones from the
+                noise in that shortlist is the work of the rest of this unit.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">A vector store keeps (vector, passage) pairs: the point is what you search on, the text is what you get back.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">It has two operations: insert pairs once at ingest time, then query for the nearest k points at question time.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">It searches by similarity, not by id. You ask for what is closest in meaning, not for an exact match.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/embeddings/chunking" prevLabel="Prev: Chunking a Document"
+        nextHref="/retrieval/nearest-neighbor-search" nextLabel="Next: Nearest-Neighbor Search"
+    />
+
+</LessonLayout>

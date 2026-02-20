@@ -1,0 +1,99 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+import LostInMiddleDemo from '../../components/demos/LostInMiddleDemo.astro';
+---
+
+<LessonLayout title="Lost in the Middle" lessonNumber="3.3" section="Augmentation">
+
+    <LessonHeader lessonNumber="3.3" title="Lost in the Middle" description="Models read the beginning and the end of a long prompt best. A key passage buried in the middle can get overlooked.">
+        <TagBadge variant="intuition">intuition</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The first and last items on a long list.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Read someone a grocery list of fifteen items, then ask them to recall it. They will nail the first
+            couple and the last couple, and the ones in the middle turn to mush. People do this. It turns out
+            models do something similar when they read a long prompt.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            You have just learned to stuff passages into the prompt and to respect the token budget. The quiet
+            surprise is that <strong>where</strong> a passage sits in that prompt changes how well the model
+            uses it. The same passage, same words, lands differently depending on its position.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A U-shaped attention.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Plot how reliably a model uses a passage against where that passage sits, and the line is shaped
+            like a U. It is high at the start, dips through the middle, and climbs back up at the end. The model
+            attends strongly to the top and the bottom of what it reads and weakly to whatever is sandwiched in
+            between. A correct, relevant passage parked in the middle can simply get overlooked.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Drag the highlighted key passage to different slots in the prompt below and watch the readout. It
+            scores high near the top and the bottom, and slumps in the middle. The exact shape is illustrative,
+            but the direction is the lesson.
+        </p>
+
+        <LostInMiddleDemo />
+
+        <InsightBox>
+            <p class="text-sm">A model's attention across a long prompt is <strong>U-shaped</strong>: strong at
+            the start and the end, weak in the middle. Position is not neutral.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The practical move.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Once you know the shape, the fix is almost free. Put the passage most likely to hold the answer
+            near the <strong>top</strong> or the <strong>bottom</strong> of the context, not buried in the
+            stack. If your reranking step gives you a best guess at the most relevant passage (Unit 5 builds
+            that), this is exactly where you spend it.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A common pattern is to order passages by relevance and place the strongest at the two ends, letting
+            the weaker ones fill the middle where attention is thin anyway. You are not adding any tokens or
+            changing the model. You are just being deliberate about seating, putting your best guest where the
+            host will actually notice them.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A worked example.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Retrieval returns six passages and you fit all six in the budget. The one that actually answers the
+            question came back ranked fourth, so by default it lands fourth in the prompt, smack in the middle.
+            The model reads everything, leans on the ends, glides past slot four, and gives a vague or wrong
+            answer even though the right text was right there.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Now reorder: move that fourth passage to the top. Nothing else changes, same six passages, same
+            token cost. The model reads it where attention is high, finds the answer, and cites it. The win came
+            from seating, not from retrieving anything new.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">A model's attention over a long prompt is U-shaped: strong at the start and end, weak in the middle.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">A correct passage buried in the middle can be overlooked, even though it is right there in the context.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Place the most relevant passage near the top or bottom. Better seating, not more tokens, buys the answer.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/augmentation/the-context-budget" prevLabel="Prev: The Context Budget"
+        nextHref="/generation/the-grounded-answer" nextLabel="Next: The Grounded Answer"
+    />
+
+</LessonLayout>

@@ -1,0 +1,118 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="The Embedding Cache" lessonNumber="6.2" section="Serving">
+
+    <LessonHeader lessonNumber="6.2" title="The Embedding Cache" description="Embedding costs time and money, and the same queries and passages repeat. Cache them, and you skip the work on a hit.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A sticky note with the answer already on it.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Imagine someone keeps asking you the same arithmetic, "what is 47 times 12?" The first time you
+            work it out. After that you scribble the answer on a sticky note and just read it off. You did the
+            hard part once; every repeat is a glance.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Turning text into a vector (embedding it) is the arithmetic here. It is real work: the request
+            goes to a model, the model runs, you wait and you pay. A cache is the sticky note. It is a small
+            store that remembers "this exact text became this exact vector," so the next time you see that
+            text you read the vector off instead of recomputing it.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Keyed by the text, checked before the work.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The cache is keyed by the text itself. Before you call the embedding model, you ask the cache:
+            "have I embedded these exact words before?" If yes, that is a hit, and you take the stored vector
+            and skip the model call entirely. If no, that is a miss, you do the work, and you write the
+            result into the cache so the next identical request is a hit.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-2"><span class="font-mono text-mt-green">hit</span> &nbsp; text is in the cache &rarr; read the vector, skip the model. Microseconds.</p>
+            <p><span class="font-mono text-mt-muted">miss</span> &nbsp; not in the cache &rarr; call the model, store the result, then continue. The full cost, once.</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The key has to be exact. "reset my password" and "Reset My Password" are different keys unless
+            you normalize the text first (lowercase it, trim the spaces). How aggressively you normalize is a
+            trade: looser keys catch more hits but risk treating two genuinely different questions as one.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Two kinds of text, two timings.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            There are two places embedding happens, and they cache differently.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The passages in your knowledge base are embedded <strong>once, at ingest</strong>, well before any
+            user shows up. You chunk the documents, embed every chunk, and store the vectors in the index.
+            That work never repeats per query. In a real sense the index is already a permanent passage
+            cache: you do not re-embed a document just because someone asked a question.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The queries are different. They arrive live, and you have to embed each one before you can search.
+            That is the embedding call sitting on the user's clock, inside the latency budget from the last
+            lesson. The good news is that real queries are not random. A support bot hears "how do I reset my
+            password?" and "where is my invoice?" over and over. Those hot queries repeat, so a query cache
+            earns its keep fast.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A worked example.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Suppose, for illustration, embedding a query takes 90ms and 40 percent of your incoming queries
+            are repeats of something asked recently (a 40 percent hit rate). On a hit you pay almost nothing,
+            call it under a millisecond to read from memory. So the embedding stage costs 90ms on a miss and
+            roughly 0ms on a hit.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Average that across 100 queries: 60 misses at 90ms and 40 hits at 0ms is 5400ms total, or about
+            54ms per query instead of 90ms. You shaved a third off the embedding stage on average, and you
+            made fewer model calls, which is fewer dollars too. Push the hit rate up (more traffic, hotter
+            queries) and the saving climbs with it.
+        </p>
+        <InsightBox>
+            <p class="text-sm">A cache turns repeated work into a lookup. Passages are embedded <strong>once at
+            ingest</strong>; queries get cached <strong>live</strong>, and because hot queries repeat, the hit
+            rate (and the time and money saved) climbs with traffic.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">You cannot keep everything.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A cache lives in limited memory, so it cannot hold every query forever. When it fills, it has to
+            drop something to make room, which is called eviction. The common rule is to drop whatever was
+            used least recently (the idea being that a query nobody has asked in a while is unlikely to come
+            back soon). That keeps the hot, repeating queries in the cache and lets the one-off oddities fall
+            out. You do not need to build a clever policy to start; "keep the recent ones, drop the stale
+            ones" gets most of the benefit.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">A cache is keyed by the text: on a hit you skip the embedding call entirely and read the stored vector.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">Passages are embedded once at ingest; queries are cached live, and because hot queries repeat the hit rate climbs with traffic.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Memory is finite, so a cache evicts what it has not used recently, keeping the hot queries and dropping the stale ones.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/serving/the-latency-budget" prevLabel="Prev: The Latency Budget"
+        nextHref="/serving/does-rerank-earn-its-cost" nextLabel="Next: Does Rerank Earn Its Cost?"
+    />
+
+</LessonLayout>

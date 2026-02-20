@@ -1,0 +1,150 @@
+---
+/**
+ * Lost-in-the-middle demo (Lesson 3.3). A vertical column of context cards stacked in the
+ * prompt, top to bottom. One card is the KEY passage (highlighted, draggable). A faint
+ * U-shaped attention curve sits beside the column: high at the top and bottom, low in the
+ * middle. The reader drags the key card to a different slot (snaps to slot centers). A
+ * readout shows an illustrative "found it?" score that is high at the ends, low in the
+ * middle. Direct manipulation, reduced-motion safe. The attention shape is illustrative.
+ */
+const W = 360, H = 300;
+const SLOTS = 6;          // number of stacked positions
+const cardH = 34, gap = 8, topY = 30, cardX = 70, cardW = 180;
+const slotY = (i: number) => topY + i * (cardH + gap);      // top-left y of slot i
+const slotCenter = (i: number) => slotY(i) + cardH / 2;     // vertical center of slot i
+
+// illustrative U-shaped attention: high at the ends, low in the middle. 0..1 per slot.
+const attention = (i: number) => {
+    const t = i / (SLOTS - 1);          // 0 at top, 1 at bottom
+    const mid = Math.abs(t - 0.5) * 2;  // 0 in middle, 1 at the ends
+    return Math.round((0.25 + 0.75 * mid) * 100) / 100;
+};
+
+// non-key filler cards occupy every slot except where the key starts (slot 2, the middle)
+const startSlot = 2;
+const curveX = 290; // x where the attention curve is drawn
+---
+
+<div class="mt-demo mr-lostmiddle my-6 bg-white border border-mt-border rounded-2xl p-6"
+     data-slots={SLOTS} data-start={startSlot}>
+    <p class="text-xs uppercase tracking-wide text-mt-muted font-semibold mb-3 text-center">Drag the key passage up or down the prompt</p>
+
+    <svg viewBox={`0 0 ${W} ${H}`} class="w-full max-w-md mx-auto block" role="img" aria-label="drag the key passage to a different slot in the prompt; attention is high at the top and bottom, low in the middle">
+        <!-- prompt column label -->
+        <text x={cardX + cardW / 2} y="18" text-anchor="middle" class="font-mono" font-size="9" fill="#6B6560">the prompt, top to bottom</text>
+
+        <!-- attention curve label -->
+        <text x={curveX + 12} y="18" text-anchor="middle" class="font-mono" font-size="8" fill="#B0708F">attention</text>
+
+        <!-- faint U-shaped attention curve beside the column -->
+        {Array.from({ length: SLOTS }).map((_, i) => {
+            const a = attention(i);
+            const cy = slotCenter(i);
+            const len = 6 + a * 34; // bar length scales with attention
+            return (
+                <g>
+                    <rect x={curveX} y={cy - 5} width={len} height="10" rx="3" fill="#FAF0F5" stroke="#B0708F" stroke-width="1" opacity="0.8" />
+                </g>
+            );
+        })}
+
+        <!-- filler (non-key) cards: every slot except the key's current slot, painted at render time by script -->
+        {Array.from({ length: SLOTS }).map((_, i) => (
+            <g data-filler={i} hidden={i === startSlot}>
+                <rect x={cardX} y={slotY(i)} width={cardW} height={cardH} rx="6" fill="#fff" stroke="#C9C2BB" stroke-width="1.5" />
+                <line x1={cardX + 12} y1={slotY(i) + 13} x2={cardX + cardW - 16} y2={slotY(i) + 13} stroke="#E3DDD6" stroke-width="3" stroke-linecap="round" />
+                <line x1={cardX + 12} y1={slotY(i) + 23} x2={cardX + cardW - 50} y2={slotY(i) + 23} stroke="#E3DDD6" stroke-width="3" stroke-linecap="round" />
+            </g>
+        ))}
+
+        <!-- the draggable KEY passage card; group translated by its slot center -->
+        <g data-key class="mt-grab" style="cursor:grab">
+            <rect data-keyrect x={cardX} y={slotY(0)} width={cardW} height={cardH} rx="6" fill="#FAF0F5" stroke="#B0708F" stroke-width="2.5" />
+            <text x={cardX + 12} y={slotY(0) + 14} class="font-mono" font-size="8" fill="#B0708F">KEY passage (the answer is here)</text>
+            <line x1={cardX + 12} y1={slotY(0) + 25} x2={cardX + cardW - 30} y2={slotY(0) + 25} stroke="#B0708F" stroke-width="3" stroke-linecap="round" opacity="0.4" />
+        </g>
+    </svg>
+
+    <div class="mt-4 text-sm max-w-md mx-auto flex items-center justify-between">
+        <p class="text-mt-muted">slot in prompt: <span data-slotreadout class="font-mono text-mt-text">3 of 6</span></p>
+        <p>found it?&nbsp;
+            <span data-score class="font-mono font-semibold text-mt-rose">0.25</span>
+            <span data-verdict class="ml-2 tag px-2 py-0.5 rounded-full text-mt-muted bg-stone-100">buried in the middle</span>
+        </p>
+    </div>
+    <p class="text-mt-muted text-xs mt-2 max-w-md mx-auto">Attention shape is illustrative: high at the top and bottom, low in the middle.</p>
+</div>
+
+<script>
+    import { gsap, draggable, clamp, countTo, REDUCED } from '../../lib/interact';
+
+    document.querySelectorAll<HTMLElement>('.mr-lostmiddle').forEach((root) => {
+        const SLOTS = Number(root.dataset.slots);
+        const startSlot = Number(root.dataset.start);
+
+        const cardH = 34, gap = 8, topY = 30, cardX = 70;
+        const slotY = (i: number) => topY + i * (cardH + gap);
+        const slotCenter = (i: number) => slotY(i) + cardH / 2;
+        const attention = (i: number) => {
+            const t = i / (SLOTS - 1);
+            const mid = Math.abs(t - 0.5) * 2;
+            return Math.round((0.25 + 0.75 * mid) * 100) / 100;
+        };
+
+        const svg = root.querySelector<SVGSVGElement>('svg')!;
+        const key = root.querySelector<SVGGElement>('[data-key]')!;
+        const fillers = Array.from(root.querySelectorAll<SVGGElement>('[data-filler]'));
+        const slotReadout = root.querySelector<HTMLElement>('[data-slotreadout]')!;
+        const score = root.querySelector<HTMLElement>('[data-score]')!;
+        const verdict = root.querySelector<HTMLElement>('[data-verdict]')!;
+
+        let slot = startSlot;       // current slot of the key card
+        const baseCenter = slotCenter(0); // the key group is drawn at slot 0; translate from there
+
+        function placeFillers() {
+            // a filler shows in every slot except the key's slot
+            fillers.forEach((g) => {
+                const i = Number(g.getAttribute('data-filler'));
+                g.hidden = i === slot;
+            });
+        }
+
+        function paint() {
+            slotReadout.textContent = `${slot + 1} of ${SLOTS}`;
+            const a = attention(slot);
+            countTo(score, a, 2);
+            const ends = a >= 0.6;
+            verdict.textContent = ends ? 'easy to find at the edge' : (a >= 0.4 ? 'getting harder' : 'buried in the middle');
+            verdict.className = ends
+                ? 'ml-2 tag px-2 py-0.5 rounded-full text-mt-rose bg-mt-roseLight'
+                : 'ml-2 tag px-2 py-0.5 rounded-full text-mt-muted bg-stone-100';
+            placeFillers();
+        }
+
+        function moveTo(targetSlot: number, snap: boolean) {
+            const dy = slotCenter(targetSlot) - baseCenter;
+            const to = { y: dy };
+            (REDUCED || !snap) ? gsap.set(key, to) : gsap.to(key, { ...to, duration: 0.25, ease: 'power2.out', overwrite: true });
+        }
+
+        // drag: follow the pointer y, but snap the SLOT (value), keep the card moving continuously
+        draggable(svg, key, (_x, y) => {
+            // continuous follow while dragging: translate the group to the raw pointer center
+            const minY = slotCenter(0), maxY = slotCenter(SLOTS - 1);
+            const cy = clamp(y, minY, maxY);
+            gsap.set(key, { y: cy - baseCenter });
+            // snap the value (which slot we are over) for the readout
+            const nearest = Math.round((cy - slotCenter(0)) / (cardH + gap));
+            const s = clamp(nearest, 0, SLOTS - 1);
+            if (s !== slot) { slot = s; paint(); }
+        });
+
+        // on release, settle the card exactly into its slot
+        const settle = () => moveTo(slot, true);
+        key.addEventListener('pointerup', settle);
+        key.addEventListener('pointercancel', settle);
+
+        moveTo(slot, false);
+        paint();
+    });
+</script>

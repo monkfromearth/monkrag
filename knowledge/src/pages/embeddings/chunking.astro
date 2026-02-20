@@ -1,0 +1,105 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+import ChunkingDemo from '../../components/demos/ChunkingDemo.astro';
+---
+
+<LessonLayout title="Chunking a Document" lessonNumber="1.3" section="Embeddings">
+
+    <LessonHeader lessonNumber="1.3" title="Chunking a Document" description="A document is too big to embed as one blob, so you split it into passages. How big each piece is changes what you can find.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Tearing a book into index cards.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Imagine answering questions about a whole book by writing one summary card for the entire thing. Ask
+            "what did the author say about the harbor on page 200?" and your card, stretched to cover all four
+            hundred pages, gives you a blur. The fix is obvious: tear the book into index cards, each holding one
+            small idea, so a question can land on the exact card it needs.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Embeddings have the same problem. One embedding is a single point of meaning, so embedding an entire
+            document smears every topic in it into one averaged point that is precise about nothing. The answer
+            is to <strong>chunk</strong> the document: split it into passages, embed each one separately, and let
+            a question match the passage it actually wants.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Drag the chunk size and watch the split change.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The one knob that matters most is how big each piece is, the <strong>chunk size</strong> (measured in
+            words or tokens). Grab the handle below and slide it. The document re-splits live, the chunk count
+            updates, and the note tells you what you are trading away at each end.
+        </p>
+
+        <ChunkingDemo />
+
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Slide it small and you get many narrow cards: a question lands on a precise one, but each card is so
+            short it can lose the thread of what came before it. Slide it large and you get a few fat cards: each
+            keeps plenty of context, but the matching passage drags in a lot of unrelated text, and that text
+            costs you later when it has to fit in the prompt.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The tradeoff, and the overlap fix.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            There is no universally right size; it is a balance. Too big means imprecise retrieval (the right
+            answer is buried in a wall of off-topic text) and wasted room in the prompt later. Too small means a
+            passage can lose the surrounding meaning: split mid-thought and "it doubled the next year" lands on a
+            card that never says what "it" was.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            A common cushion is <strong>overlap</strong>: let each chunk repeat the last few words of the one
+            before it. A sentence cut by a boundary then survives on at least one card whole, so an idea is not
+            lost at the seam. The cost is a little duplication, paid to avoid losing meaning at the edges.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="mb-1"><span class="font-semibold text-mt-text">small chunks</span> &rarr; precise match, but a passage can lose its context.</p>
+            <p class="mb-1"><span class="font-semibold text-mt-text">large chunks</span> &rarr; rich context, but imprecise retrieval and wasted prompt room.</p>
+            <p class="mb-0"><span class="font-semibold text-mt-text">overlap</span> &rarr; repeat a few words across the seam so ideas survive the cut.</p>
+        </div>
+        <InsightBox>
+            <p class="text-sm">Chunk size is a dial between <strong>precision and context</strong>. Small cards
+            are precise but forgetful; large cards remember but blur. You tune it for your documents, and a
+            little overlap saves the ideas that fall on a boundary.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">What chunking is not</h2>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">A summary step</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Chunking does not rewrite or shorten the text. It cuts the original into pieces and keeps every word. A question still reads the real passage, not a paraphrase of it.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">A free choice</p>
+                <p class="text-mt-muted text-xs leading-relaxed">The size is not cosmetic. It sets what retrieval can find and how much you pay in the prompt later. Picking it badly quietly caps how good the whole system can get.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">A document is split into passages (chunks) and each chunk is embedded on its own, so a question can match the exact piece.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">Chunk size trades precision against context: too big is imprecise and wasteful, too small loses surrounding meaning.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">A little overlap between chunks keeps an idea from being lost at a boundary, at the cost of small duplication.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/embeddings/measuring-closeness" prevLabel="Prev: Measuring Closeness"
+        nextHref="/retrieval/the-vector-store" nextLabel="Next: The Vector Store"
+    />
+
+</LessonLayout>

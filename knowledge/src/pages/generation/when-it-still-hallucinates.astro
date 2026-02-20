@@ -1,0 +1,171 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import ExerciseBox from '../../components/ExerciseBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="When It Still Hallucinates" lessonNumber="4.3" section="Generation">
+
+    <LessonHeader lessonNumber="4.3" title="When It Still Hallucinates" description="Grounding cuts hallucination, it does not erase it. The model can misread a passage, blend it with memory, or answer when the context is silent.">
+        <TagBadge variant="intuition">intuition</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The open book is still read by a careless reader.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Handing the student the textbook helps a lot. It does not turn a careless reader into a careful
+            one. They can still skim the wrong line, mix a half-remembered fact into the answer, or fill a
+            gap with a confident guess when the page simply does not cover the question.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Grounding (lesson 4.1) is the same kind of help. It pulls the model's answers much closer to the
+            sources and cuts the rate of made-up facts sharply. But the model is still doing the reading, and
+            it can still slip. This lesson is about the slips that survive grounding, so you know what you are
+            still on the hook to catch.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Grounding lowers the odds of a made-up answer. It does not lower them to zero.
+            Treat it as a strong guardrail, not a guarantee.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Three ways a grounded answer goes wrong.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The failures cluster into three shapes. Naming them is half the battle, because each one has a
+            different fix.
+        </p>
+        <div class="grid sm:grid-cols-3 gap-4 mb-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1">The silent context</p>
+                <p class="text-mt-muted text-xs leading-relaxed">The passages do not contain the answer, but
+                the model answers anyway, filling the gap with a plausible guess instead of saying it does
+                not know.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1">The misread</p>
+                <p class="text-mt-muted text-xs leading-relaxed">The answer is in the context, but the model
+                pulls it from the wrong passage or scrambles a detail, so the citation points somewhere that
+                does not back the claim.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1">Memory wins</p>
+                <p class="text-mt-muted text-xs leading-relaxed">The context says one thing, the model
+                "knows" another from training, and it trusts its memory over the page in front of it,
+                overriding the source.</p>
+            </div>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            That third one is the sneakiest. If the source contradicts something common, like a company that
+            renamed a product or a fact that changed last year, the model's training nudges it back toward the
+            old, more familiar answer, even though the fresh source is the one you want it to use.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Faithful is not the same as correct.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Two different questions hide inside "is this answer good?" The first: does the answer match the
+            passages it was given (the precise term is <strong>faithfulness</strong>)? The second: is the
+            answer true about the world (correctness)? They come apart in both directions.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1">Faithful but wrong</p>
+                <p class="text-mt-muted text-xs leading-relaxed">The source itself was outdated or mistaken.
+                The model reported it accurately, so it was faithful, but the answer is false. The fix lives
+                in retrieval, not generation.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1">Correct but unfaithful</p>
+                <p class="text-mt-muted text-xs leading-relaxed">The model happened to give the right answer
+                from memory, with a citation that does not actually support it. Right today, but you cannot
+                trust the process tomorrow.</p>
+            </div>
+        </div>
+        <p class="text-mt-muted leading-relaxed mt-4">
+            The generation step can only be held to faithfulness: did it stick to the sources it was handed?
+            Correctness also depends on whether the right sources were retrieved in the first place. Keeping
+            the two apart tells you which part of the pipeline to go fix.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">How to push the slips down.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            None of these fully closes the gap, but stacked together they move the needle a lot.
+        </p>
+        <ul class="space-y-3 text-sm text-mt-muted leading-relaxed mb-4">
+            <li><span class="font-semibold text-mt-text">Tell it to abstain.</span> Make "I do not know" an
+            allowed, encouraged answer when the context is silent. A model that is permitted to decline
+            guesses less.</li>
+            <li><span class="font-semibold text-mt-text">Check citations against the context.</span> For each
+            cited claim, confirm the cited passage actually contains it. A claim whose citation does not back
+            it is the clearest signal of an unfaithful answer.</li>
+            <li><span class="font-semibold text-mt-text">Fix retrieval when the source is wrong.</span> If the
+            answer is faithful but false, the bad passage got retrieved. That is a retrieval problem (Unit 2),
+            not a generation one.</li>
+        </ul>
+        <ExerciseBox title="Spot the unfaithful answer">
+            <p class="text-sm text-mt-muted leading-relaxed mb-2">
+                The context handed to the model is a single passage:
+            </p>
+            <p class="text-sm bg-white border border-mt-border rounded-lg px-3 py-2 mb-3 font-mono text-xs">
+                [1] pricing.md: "The Pro plan costs 20 dollars per month and includes 5 seats."
+            </p>
+            <p class="text-sm text-mt-muted leading-relaxed mb-2">Question: How much is the Pro plan, and how many seats?</p>
+            <p class="text-sm mb-1"><strong>Answer A:</strong> "The Pro plan is 20 dollars per month and includes 5 seats. [source: 1]"</p>
+            <p class="text-sm mb-3"><strong>Answer B:</strong> "The Pro plan is 20 dollars per month and includes unlimited seats. [source: 1]"</p>
+            <p class="text-sm text-mt-muted leading-relaxed">
+                Which answer is faithful, and why? Answer A is faithful: every claim, the price and the seat
+                count, is supported by passage 1, and the citation checks out. Answer B is unfaithful: the
+                price is right, but "unlimited seats" appears nowhere in the source. It cites passage 1, yet
+                passage 1 says 5 seats. The citation does not back the claim, which is exactly the misread (or
+                memory-wins) failure. Notice that B is not even wrong-looking on its face; you only catch it by
+                checking the citation against the context.
+            </p>
+        </ExerciseBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">What grounding is not</h2>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">A guarantee of truth</p>
+                <p class="text-mt-muted text-xs leading-relaxed">A citation says "I read this here," not
+                "this is true." If the source was wrong or the model misread it, a confident citation sits
+                right next to a bad answer.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 line-through text-mt-muted">A reason to stop checking</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Grounding makes answers auditable; it does
+                not do the audit. The cite-check, the abstain rule, and a retrieval that surfaces the right
+                source still earn their keep.</p>
+            </div>
+        </div>
+        <InsightBox>
+            <p class="text-sm">The honest claim is not "RAG cannot hallucinate." It is "RAG hallucinates far
+            less, and when it does, the citation gives you a place to catch it."</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">Grounded answers still fail in three shapes: the context is silent so the model guesses, it misreads or misattributes a passage, or it overrides the source with memorized belief.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">Faithful (matches the sources) and correct (true about the world) are not the same; an answer can be one without the other, and that tells you which part of the pipeline to fix.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Push the slips down by letting the model abstain when the context is silent and by checking each citation against the passage it points to; grounding is a guardrail, not a guarantee.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/generation/streaming" prevLabel="Prev: Streaming the Answer"
+        nextHref="/reranking/why-retrieval-isnt-enough" nextLabel="Next: Why Retrieval Isn't Enough"
+    />
+
+</LessonLayout>

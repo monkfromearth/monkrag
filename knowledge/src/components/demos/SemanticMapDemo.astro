@@ -1,0 +1,143 @@
+---
+/**
+ * Semantic map demo (Lesson 1.2). Drag the coral query dot around a 2D map of meaning.
+ * The nearest passages light up and an illustrative closeness number updates.
+ * Meaning as distance: drag near "dog" and the dog-ish words win; drag near "car" and they do.
+ * Direct manipulation, reduced-motion safe. The closeness scores are illustrative, not measured.
+ */
+const W = 360, H = 260;
+// fixed passages: dog-ish words cluster top-left, car-ish words cluster bottom-right
+const points = [
+    { id: 'puppy',  x: 70,  y: 60,  label: 'puppy' },
+    { id: 'dog',    x: 110, y: 95,  label: 'dog' },
+    { id: 'cat',    x: 70,  y: 135, label: 'cat' },
+    { id: 'car',    x: 280, y: 175, label: 'car' },
+    { id: 'engine', x: 250, y: 210, label: 'engine' },
+    { id: 'road',   x: 300, y: 130, label: 'road' },
+];
+// query starts in open space between the two clusters
+const startX = 185, startY = 130;
+---
+
+<div class="mt-demo mr-semanticmap my-6 bg-white border border-mt-border rounded-2xl p-6"
+     data-points={JSON.stringify(points)} data-startx={startX} data-starty={startY}>
+    <p class="text-xs uppercase tracking-wide text-mt-muted font-semibold mb-3 text-center">Drag the question around the map of meaning</p>
+
+    <svg viewBox={`0 0 ${W} ${H}`} class="w-full max-w-md mx-auto block" role="img" aria-label="drag a query point on a 2D map of meaning; the three nearest passages light up">
+        <!-- soft frame -->
+        <rect x="8" y="8" width={W - 16} height={H - 16} rx="14" fill="#FBFAF8" stroke="#E7E2DC" stroke-width="1.5"/>
+
+        <!-- connecting lines to nearest passages (drawn under the dots) -->
+        <g data-links>
+            <line data-link="0" x1="0" y1="0" x2="0" y2="0" stroke="#C96F5A" stroke-width="0" stroke-linecap="round" opacity="0.55"/>
+            <line data-link="1" x1="0" y1="0" x2="0" y2="0" stroke="#C96F5A" stroke-width="0" stroke-linecap="round" opacity="0.55"/>
+            <line data-link="2" x1="0" y1="0" x2="0" y2="0" stroke="#C96F5A" stroke-width="0" stroke-linecap="round" opacity="0.55"/>
+        </g>
+
+        <!-- fixed passage dots -->
+        {points.map((p) => (
+            <g data-passage={p.id}>
+                <circle data-dot cx={p.x} cy={p.y} r="6" fill="#7E7FBC" stroke="#fff" stroke-width="2"/>
+                <text x={p.x} y={p.y - 11} text-anchor="middle" class="font-mono" font-size="9" fill="#6B6560">{p.label}</text>
+            </g>
+        ))}
+
+        <!-- draggable query dot -->
+        <g data-query class="mt-grab" style="cursor:grab">
+            <circle cx={startX} cy={startY} r="9" fill="#C96F5A" stroke="#fff" stroke-width="2.5"/>
+            <text x={startX} y={startY + 22} text-anchor="middle" class="font-mono" font-size="9" font-weight="600" fill="#C96F5A">question</text>
+        </g>
+    </svg>
+
+    <div class="mt-4 text-sm max-w-md mx-auto">
+        <p class="text-mt-muted mb-2">Nearest passages right now:</p>
+        <ol data-readout class="space-y-1 font-mono text-xs"></ol>
+        <p class="text-mt-muted text-xs mt-3">Closeness is illustrative (distance on this little map), not a measured embedding score.</p>
+    </div>
+</div>
+
+<script>
+    import { gsap, draggable, clamp, REDUCED } from '../../lib/interact';
+
+    type P = { id: string; x: number; y: number; label: string };
+
+    document.querySelectorAll<HTMLElement>('.mr-semanticmap').forEach((root) => {
+        const pts: P[] = JSON.parse(root.dataset.points!);
+        const svg = root.querySelector<SVGSVGElement>('svg')!;
+        const queryG = root.querySelector<SVGGElement>('[data-query]')!;
+        const qCircle = queryG.querySelector<SVGCircleElement>('circle')!;
+        const qText = queryG.querySelector<SVGTextElement>('text')!;
+        const links = Array.from(root.querySelectorAll<SVGLineElement>('[data-link]'));
+        const readout = root.querySelector<HTMLElement>('[data-readout]')!;
+        const dots = pts.map((p) => root.querySelector<SVGCircleElement>(`[data-passage="${p.id}"] [data-dot]`)!);
+
+        // box the query can roam inside (keep it off the very edge)
+        const minX = 24, maxX = 336, minY = 30, maxY = 224;
+        // longest possible distance inside the box: used to map distance -> 0..1 closeness
+        const maxDist = Math.hypot(maxX - minX, maxY - minY);
+
+        let qx = Number(root.dataset.startx);
+        let qy = Number(root.dataset.starty);
+
+        function paint() {
+            // distance from query to every passage
+            const ranked = pts
+                .map((p, i) => ({ p, i, d: Math.hypot(p.x - qx, p.y - qy) }))
+                .sort((a, b) => a.d - b.d);
+            const nearest = ranked.slice(0, 3);
+            const nearIdx = new Set(nearest.map((r) => r.i));
+
+            // dots: thicken/recolor the three nearest, dim the rest
+            ranked.forEach(({ i }) => {
+                const dot = dots[i];
+                if (nearIdx.has(i)) {
+                    dot.setAttribute('fill', '#C96F5A');
+                    dot.setAttribute('r', '7');
+                } else {
+                    dot.setAttribute('fill', '#7E7FBC');
+                    dot.setAttribute('r', '6');
+                }
+            });
+
+            // connecting lines to the three nearest
+            links.forEach((ln, k) => {
+                const r = nearest[k];
+                if (!r) { ln.setAttribute('stroke-width', '0'); return; }
+                ln.setAttribute('x1', String(qx));
+                ln.setAttribute('y1', String(qy));
+                ln.setAttribute('x2', String(r.p.x));
+                ln.setAttribute('y2', String(r.p.y));
+                ln.setAttribute('stroke-width', k === 0 ? '2.5' : '1.5');
+            });
+
+            // readout: label + illustrative closeness (1 = on top of it, 0 = far)
+            readout.innerHTML = nearest
+                .map((r) => {
+                    const closeness = Math.max(0, 1 - r.d / maxDist).toFixed(1);
+                    return `<li class="flex justify-between"><span class="text-mt-accent">${r.p.label}</span><span class="text-mt-muted">closeness ${closeness}</span></li>`;
+                })
+                .join('');
+        }
+
+        function place(animate: boolean) {
+            const to = { attr: { cx: qx, cy: qy } };
+            const tTo = { attr: { x: qx, y: qy + 22 } };
+            if (REDUCED || !animate) {
+                gsap.set(qCircle, { attr: { cx: qx, cy: qy } });
+                gsap.set(qText, { attr: { x: qx, y: qy + 22 } });
+            } else {
+                gsap.to(qCircle, { ...to, duration: 0.15, ease: 'power2.out', overwrite: true });
+                gsap.to(qText, { ...tTo, duration: 0.15, ease: 'power2.out', overwrite: true });
+            }
+            paint();
+        }
+
+        draggable(svg, queryG, (x, y) => {
+            qx = clamp(x, minX, maxX);
+            qy = clamp(y, minY, maxY);
+            place(false);
+        });
+
+        place(false);
+    });
+</script>

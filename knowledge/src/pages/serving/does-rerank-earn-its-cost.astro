@@ -1,0 +1,111 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import ExerciseBox from '../../components/ExerciseBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="Does Rerank Earn Its Cost?" lessonNumber="6.3" section="Serving">
+
+    <LessonHeader lessonNumber="6.3" title="Does Rerank Earn Its Cost?" description="Reranking buys recall and spends latency. Whether that trade is worth it depends on your budget, and you decide it with numbers, not vibes.">
+        <TagBadge variant="exercise">exercise</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">A trade, not an upgrade.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Reranking is tempting because it almost always makes the ordering better. The cross-encoder from
+            unit 5 reads the query and each passage together and sorts them more carefully than first-pass
+            search did. More of the truly relevant passages end up near the top (higher recall in your top
+            results).
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            But it is not a free upgrade, it is a trade. You buy better recall and you pay in milliseconds,
+            and those milliseconds come straight out of the p99 budget from lesson 6.1. So the real question
+            is not "is reranking good?" It is "does the recall it buys justify the latency it spends, given my
+            budget?" That is a numbers question.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">The three numbers that decide it.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Three quantities settle the call. The recall you gain by reranking (how many more of the right
+            passages reach the top). The milliseconds you add (the cost of the cross-encoder pass). And the
+            headroom in your budget (how much of the p99 ceiling is still unspent). Reranking is worth it when
+            the recall gain matters for your use and the added milliseconds fit under the ceiling.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 text-mt-green">When it pays</p>
+                <p class="text-mt-muted text-xs leading-relaxed">The answer has to be right (legal, medical, support where a wrong passage is costly), and the budget has room to absorb the extra time. The recall gain is worth more than the milliseconds.</p>
+            </div>
+            <div class="bg-white border border-mt-border rounded-xl p-5">
+                <p class="font-semibold text-sm mb-1 text-mt-accent">When it does not</p>
+                <p class="text-mt-muted text-xs leading-relaxed">Latency is already tight, or first-pass recall is already high enough that the reorder barely changes the answer. You would spend real milliseconds to gain almost nothing the user notices.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Make the call.</h2>
+        <ExerciseBox title="Decide it with the numbers">
+            <p class="text-sm leading-relaxed mb-3">
+                You run a support assistant. Your p99 budget is 800ms. Without reranking, the pipeline lands
+                at a p99 of 700ms and recall@5 is 0.78 (78 percent of the right passages reach the top five).
+                Turning reranking on adds 150ms and lifts recall@5 to 0.91. The numbers are illustrative.
+            </p>
+            <p class="text-sm leading-relaxed mb-2"><strong>Your task:</strong></p>
+            <ol class="list-decimal ml-5 text-sm leading-relaxed space-y-1">
+                <li>Add the 150ms to the 700ms p99. Does the result still fit under 800ms? By how much is it over or under?</li>
+                <li>Decide: do you turn reranking on? Justify it in one sentence using the recall gain and the budget.</li>
+                <li>If the answer is "over budget," name one thing you could cut elsewhere to make room, and roughly how many milliseconds you would need to find.</li>
+            </ol>
+            <p class="text-mt-muted text-xs leading-relaxed mt-3">
+                A hint, not the answer: 700 plus 150 is 850, and the ceiling is 800. So "just turn it on"
+                breaks the budget by 50ms. The honest move is to decide whether the 0.13 recall gain is worth
+                finding those 50ms somewhere, or worth a slower promise.
+            </p>
+        </ExerciseBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Measured against a baseline.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Notice what made the exercise answerable: you had numbers. A recall figure, a latency figure, a
+            ceiling. The honest verdict on any upgrade comes from comparing it to a baseline, the same
+            pipeline with the feature turned off, measured the same way. "Reranking feels better" is not a
+            verdict. "Reranking lifts recall@5 from 0.78 to 0.91 and costs 150ms against an 800ms budget" is.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            This is exactly the headline of monkrag's second stage: a reproducible measurement that says, in
+            numbers, whether each upgrade earns its cost against a naive baseline. The point of the system is
+            not that it has reranking. It is that it can prove, on its own benchmark, whether reranking was
+            worth it.
+        </p>
+        <InsightBox>
+            <p class="text-sm">Reranking is a trade: recall bought with latency. You decide it with three
+            numbers (recall gained, milliseconds added, budget headroom) measured against a <strong>baseline
+            with the feature off</strong>, not with a feeling.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">Reranking buys recall and spends latency, so it is a trade decided against the p99 budget, not a free upgrade.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">It pays when the answer must be right and the budget has room; it does not when latency is tight or recall is already enough.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">The honest verdict is measured against a baseline with the feature off, in numbers, which is the headline of monkrag.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/serving/the-embedding-cache" prevLabel="Prev: The Embedding Cache"
+        nextHref="/serving/the-whole-service" nextLabel="Next: The Whole Service"
+    />
+
+</LessonLayout>

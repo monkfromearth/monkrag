@@ -1,0 +1,116 @@
+---
+import '../../styles/global.css';
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import LessonHeader from '../../components/LessonHeader.astro';
+import LessonNav from '../../components/LessonNav.astro';
+import InsightBox from '../../components/InsightBox.astro';
+import TagBadge from '../../components/TagBadge.astro';
+---
+
+<LessonLayout title="Hybrid Retrieval" lessonNumber="2.4" section="Retrieval">
+
+    <LessonHeader lessonNumber="2.4" title="Hybrid Retrieval" description="Vector search finds meaning; keyword search finds exact terms. Hybrid retrieval uses both, because each catches what the other misses.">
+        <TagBadge variant="concepts">concepts</TagBadge>
+        <TagBadge variant="default">8 min read</TagBadge>
+    </LessonHeader>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Two readers with opposite habits.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Imagine two people helping you search a manual. One reads for the gist: tell her what you mean and
+            she finds the passage that is about that, even if it uses none of your words. The other has a
+            photographic memory for exact strings: give him a part number and he finds every line that
+            contains it, character for character. Each is brilliant at what the other is hopeless at. Hybrid
+            retrieval is simply hiring both.
+        </p>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The gist reader is vector search (everything in this unit so far): it matches by meaning. The
+            exact-string reader is keyword search, the old-school approach that scores a passage by how well
+            its actual words overlap with the query (the classic version is called BM25). Most of this unit
+            has been about the first. This lesson is about why you still want the second.
+        </p>
+
+        <InsightBox>
+            <p class="text-sm">Vector search matches <strong>meaning</strong>; keyword search matches
+            <strong>exact terms</strong>. Hybrid retrieval runs both and merges their results, so a passage
+            wins if either reader flags it.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Where vectors quietly miss.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            Vector search smooths everything into meaning, and that smoothing is exactly its blind spot. Some
+            things have no "meaning" to generalize, they just are what they are, and the model never saw them
+            often enough to place them well. When a query hinges on one of those, the closest-by-meaning
+            passage can be the wrong one.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="font-semibold mb-2">Keyword wins when the query is:</p>
+            <p class="mb-1 text-mt-muted">An exact code or id: <span class="font-mono text-mt-text">error TS2304</span>, <span class="font-mono text-mt-text">part #A1-9920</span>. The digits carry the whole meaning.</p>
+            <p class="mb-1 text-mt-muted">A proper name: <span class="font-mono text-mt-text">the Vasquez account</span>. Two names can mean nearly the same thing to a vector yet point at different people.</p>
+            <p class="text-mt-muted">Rare jargon or an acronym the model barely saw: it has no good point for it, so similarity is noisy.</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            For all of these, an exact string match is dead simple and dead reliable. The word is either there
+            or it is not.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Where keywords quietly miss.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The reverse is just as real. Keyword search is literal, so it only finds passages that share your
+            actual words. The moment the answer is phrased differently, it is blind to it.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed">
+            <p class="font-semibold mb-2">Vectors win when the query is:</p>
+            <p class="mb-1 text-mt-muted">A paraphrase: you ask <span class="font-mono text-mt-text">how do I get my money back</span> and the passage says <span class="font-mono text-mt-text">refund policy</span>. No shared words, same meaning.</p>
+            <p class="mb-1 text-mt-muted">A synonym: <span class="font-mono text-mt-text">car</span> vs <span class="font-mono text-mt-text">automobile</span>, <span class="font-mono text-mt-text">laptop</span> vs <span class="font-mono text-mt-text">notebook</span>. Keyword search treats them as unrelated.</p>
+            <p class="text-mt-muted">A concept stated in plain language that the docs phrase formally, or in another register entirely.</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            This is exactly what vectors are good at. They put "money back" and "refund" near each other in
+            meaning-space, so the right passage scores high even with zero word overlap.
+        </p>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Combining the two scores.</h2>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            So you run both searches and you get two ranked lists: one by meaning, one by word overlap. Hybrid
+            retrieval merges them into a single shortlist. The plain way to do it is to blend the scores: give
+            each passage a combined score that is part vector score and part keyword score, then sort by that.
+        </p>
+        <div class="bg-white border border-mt-border rounded-xl p-5 mb-4 text-sm leading-relaxed text-center">
+            <p class="font-mono">combined = (weight &times; vector score) + (1 &minus; weight) &times; keyword score</p>
+        </div>
+        <p class="text-mt-muted leading-relaxed mb-4">
+            The weight is a dial: lean toward vectors when your queries are conversational, toward keywords
+            when they are full of codes and names. A passage that both readers like rises to the top; a
+            passage only one of them caught still makes the list instead of being dropped. That is the whole
+            payoff: you stop losing the exact-match hits and the paraphrase hits at the same time.
+        </p>
+
+        <InsightBox>
+            <p class="text-sm">Blend the two scores into one, with a weight you tune to your queries. The point
+            is coverage: <strong>a passage survives if either search found it</strong>, so neither blind spot
+            sinks the result.</p>
+        </InsightBox>
+    </section>
+
+    <section class="mb-14">
+        <h2 class="text-xl font-bold mb-4">Key takeaways</h2>
+        <div class="space-y-3">
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">1</span></div><p class="text-sm">Vector search matches meaning; keyword search (BM25) matches exact words. Each fails where the other is strong.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">2</span></div><p class="text-sm">Keywords catch exact codes, names, and rare jargon; vectors catch paraphrases and synonyms with no shared words.</p></div>
+            <div class="flex items-start gap-3"><div class="w-6 h-6 rounded-full bg-mt-accentLight flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-mt-accent font-bold text-xs">3</span></div><p class="text-sm">Hybrid retrieval blends both scores with a tunable weight, so a passage survives if either search found it.</p></div>
+        </div>
+    </section>
+
+    <LessonNav
+        prevHref="/retrieval/recall-at-k" prevLabel="Prev: Recall@k, the Metric"
+        nextHref="/augmentation/stuffing-the-context" nextLabel="Next: Stuffing the Context"
+    />
+
+</LessonLayout>

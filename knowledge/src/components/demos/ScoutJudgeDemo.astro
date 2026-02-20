@@ -1,0 +1,165 @@
+---
+/**
+ * Scout and judge demo (Lesson 5.2). The scout (bi-encoder) hands over ~50 cheap
+ * candidates. Drag the handle to set the rerank depth, how many of them the judge
+ * (cross-encoder) re-scores, snapped to 0/10/20/30/40/50. Two readouts move:
+ * an illustrative precision that rises then flattens (diminishing returns), and an
+ * illustrative added latency in ms that climbs roughly linearly with depth.
+ * Direct manipulation, reduced-motion safe. Numbers are illustrative, not benchmarks.
+ */
+const W = 380, H = 210;
+const total = 50;
+const cols = 10, rows = 5;
+const gridX = 20, gridY = 26, cell = 22, gap = 4;
+// track for the depth handle, along the bottom
+const trackY = 188, trackX0 = 36, trackX1 = 344;
+const steps = [0, 10, 20, 30, 40, 50];
+const startDepth = 10;
+---
+
+<div class="mt-demo mr-scoutjudge my-6 bg-white border border-mt-border rounded-2xl p-6"
+     data-total={total} data-cols={cols} data-cell={cell} data-gap={gap}
+     data-gridx={gridX} data-gridy={gridY}
+     data-x0={trackX0} data-x1={trackX1} data-track={trackY} data-start={startDepth}>
+    <p class="text-xs uppercase tracking-wide text-mt-muted font-semibold mb-3 text-center">Drag to set how many candidates the judge re-scores</p>
+
+    <svg viewBox={`0 0 ${W} ${H}`} class="w-full max-w-lg mx-auto block" role="img" aria-label="drag a handle to set the rerank depth across fifty scout candidates">
+        <!-- labels -->
+        <text x={gridX} y="16" class="font-mono" font-size="9" fill="#6B6560">scout: 50 candidates (cheap)</text>
+
+        <!-- the 50 candidate cells, drawn in script -->
+        <g data-grid></g>
+
+        <!-- judged-portion bracket -->
+        <text data-judgelabel x={gridX} text-anchor="start" class="font-mono" font-size="9" fill="#C2873B" y="150">judge re-scores top 10</text>
+
+        <!-- depth track -->
+        <line x1={trackX0} y1={trackY} x2={trackX1} y2={trackY} stroke="#E8E4DF" stroke-width="4" stroke-linecap="round"/>
+        <line data-fill x1={trackX0} y1={trackY} x2={trackX0} y2={trackY} stroke="#C2873B" stroke-width="4" stroke-linecap="round"/>
+        <circle data-handle cx={trackX0} cy={trackY} r="9" fill="#fff" stroke="#C2873B" stroke-width="2.5" class="mt-grab" style="cursor:grab"/>
+    </svg>
+
+    <div class="mt-4 grid grid-cols-3 gap-3 text-center max-w-lg mx-auto">
+        <div class="bg-mt-amberLight rounded-xl px-3 py-2">
+            <p class="text-xs text-mt-muted">rerank depth</p>
+            <p class="font-mono text-lg font-semibold text-mt-amber"><span data-depth>10</span></p>
+        </div>
+        <div class="bg-stone-100 rounded-xl px-3 py-2">
+            <p class="text-xs text-mt-muted">precision</p>
+            <p class="font-mono text-lg font-semibold text-mt-text"><span data-prec>0.71</span></p>
+        </div>
+        <div class="bg-stone-100 rounded-xl px-3 py-2">
+            <p class="text-xs text-mt-muted">added latency</p>
+            <p class="font-mono text-lg font-semibold text-mt-text"><span data-lat>40</span> ms</p>
+        </div>
+    </div>
+
+    <p class="text-center text-mt-muted text-xs mt-3">Precision and latency are illustrative, not benchmarks. They show the shape of the tradeoff: more passages judged means better ranking but more time, with diminishing returns.</p>
+</div>
+
+<script>
+    import { gsap, draggable, clamp, countTo, REDUCED } from '../../lib/interact';
+
+    const STEPS = [0, 10, 20, 30, 40, 50];
+    // illustrative precision per step: rises then flattens (diminishing returns)
+    const PREC: Record<number, number> = { 0: 0.52, 10: 0.71, 20: 0.83, 30: 0.88, 40: 0.90, 50: 0.91 };
+    // illustrative added latency in ms: roughly linear with depth (~4ms per judged passage)
+    const LAT: Record<number, number> = { 0: 0, 10: 40, 20: 80, 30: 120, 40: 160, 50: 200 };
+
+    document.querySelectorAll<HTMLElement>('.mr-scoutjudge').forEach((root) => {
+        const total = Number(root.dataset.total);
+        const cols = Number(root.dataset.cols);
+        const cell = Number(root.dataset.cell);
+        const gap = Number(root.dataset.gap);
+        const gridX = Number(root.dataset.gridx);
+        const gridY = Number(root.dataset.gridy);
+        const x0 = Number(root.dataset.x0);
+        const x1 = Number(root.dataset.x1);
+        const trackY = Number(root.dataset.track);
+
+        const svg = root.querySelector<SVGSVGElement>('svg')!;
+        const grid = root.querySelector<SVGGElement>('[data-grid]')!;
+        const handle = root.querySelector<SVGCircleElement>('[data-handle]')!;
+        const fill = root.querySelector<SVGLineElement>('[data-fill]')!;
+        const judgeLabel = root.querySelector<SVGTextElement>('[data-judgelabel]')!;
+        const depthEl = root.querySelector<HTMLElement>('[data-depth]')!;
+        const precEl = root.querySelector<HTMLElement>('[data-prec]')!;
+        const latEl = root.querySelector<HTMLElement>('[data-lat]')!;
+
+        const SVGNS = 'http://www.w3.org/2000/svg';
+
+        // build the 50 cells
+        const cells: SVGRectElement[] = [];
+        for (let i = 0; i < total; i++) {
+            const c = i % cols;
+            const r = Math.floor(i / cols);
+            const rect = document.createElementNS(SVGNS, 'rect');
+            rect.setAttribute('x', String(gridX + c * (cell + gap)));
+            rect.setAttribute('y', String(gridY + r * (cell + gap)));
+            rect.setAttribute('width', String(cell));
+            rect.setAttribute('height', String(cell));
+            rect.setAttribute('rx', '4');
+            rect.setAttribute('fill', '#F4F1EC');
+            rect.setAttribute('stroke', '#E8E4DF');
+            rect.setAttribute('stroke-width', '1');
+            grid.appendChild(rect);
+            cells.push(rect);
+        }
+
+        const xForDepth = (d: number) => x0 + (d / total) * (x1 - x0);
+        const snap = (d: number) => STEPS.reduce((a, b) => (Math.abs(b - d) < Math.abs(a - d) ? b : a), STEPS[0]);
+
+        let depth = Number(root.dataset.start);
+
+        function paintCells() {
+            // first `depth` cells (in reading order) are the judged portion
+            cells.forEach((rect, i) => {
+                const judged = i < depth;
+                rect.setAttribute('fill', judged ? '#FBF3E6' : '#F4F1EC');
+                rect.setAttribute('stroke', judged ? '#C2873B' : '#E8E4DF');
+                rect.setAttribute('stroke-width', judged ? '1.5' : '1');
+            });
+        }
+
+        function paintReadouts() {
+            depthEl.textContent = String(depth);
+            judgeLabel.textContent = depth === 0 ? 'judge re-scores nothing' : `judge re-scores top ${depth}`;
+            countTo(precEl, PREC[depth], 2);
+            countTo(latEl, LAT[depth], 0);
+        }
+
+        function moveHandle(cx: number, animate: boolean) {
+            const xTo = { attr: { cx } };
+            if (REDUCED || !animate) {
+                handle.setAttribute('cx', String(cx));
+                fill.setAttribute('x2', String(cx));
+            } else {
+                gsap.to(handle, { attr: { cx }, duration: 0.2, ease: 'power2.out', overwrite: true });
+                gsap.to(fill, { attr: { x2: cx }, duration: 0.2, ease: 'power2.out', overwrite: true });
+            }
+        }
+
+        // live drag: handle follows pointer continuously, value snaps for readouts
+        draggable(svg, handle, (x) => {
+            const cx = clamp(x, x0, x1);
+            const raw = ((cx - x0) / (x1 - x0)) * total;
+            depth = snap(raw);
+            moveHandle(cx, false);   // continuous position while dragging
+            paintCells();
+            paintReadouts();
+        });
+
+        // on release, settle the handle onto the snapped value
+        const settle = () => moveHandle(xForDepth(depth), true);
+        handle.addEventListener('pointerup', settle);
+        handle.addEventListener('pointercancel', settle);
+
+        // initial paint at the start depth
+        moveHandle(xForDepth(depth), false);
+        paintCells();
+        depthEl.textContent = String(depth);
+        precEl.textContent = PREC[depth].toFixed(2);
+        latEl.textContent = String(LAT[depth]);
+        judgeLabel.textContent = depth === 0 ? 'judge re-scores nothing' : `judge re-scores top ${depth}`;
+    });
+</script>
